@@ -1,0 +1,52 @@
+# AI Tahfiz
+
+PWA (tanpa build tool, tanpa dependensi) untuk menghafal Al-Qur'an dengan siklus:
+**dengar & baca → hafalkan → setor suara → murajaah terjadwal**.
+
+## Fitur
+- **Belajar** — teks Utsmani + terjemahan Indonesia (AlQuran Cloud API), basmalah dipisah dari ayat 1.
+  Mode tampilan: *Tampil*, *Huruf awal* (petunjuk), *Sembunyi* (ketuk untuk membuka).
+- **Putar berulang (talaqqi)** — rentang ayat, ulang tiap ayat N×, opsi ulangi rentang, pilihan qari, ayat yang diputar disorot.
+- **Setoran suara** (popup, bisa dibuka dari mana saja) — Web Speech API (`ar-SA`), hasil dibandingkan per kata
+  dengan teks ayat (toleran terhadap perbedaan rasm Utsmani vs imla'i), kata yang terlewat ditandai, nilai disarankan.
+- **Murajaah terjadwal** — pengulangan berjarak (varian SM-2) per ayat: *Lupa / Ragu / Lancar*, kartu dengan petunjuk
+  ayat sebelumnya, ayat yang lupa diulang lagi di akhir sesi.
+- **Progres** — target harian, hari beruntun, peta aktivitas 15 minggu, progres per surah.
+- **Offline** — surah disimpan di IndexedDB; tombol "Unduh semua surah"; service worker untuk shell aplikasi.
+- **Data** — ekspor/impor JSON (juga menerima ekspor versi MVP), migrasi otomatis progres MVP (`aitahfiz-progress-v1`).
+- Tema terang/gelap, ukuran huruf Arab dapat diatur.
+
+## Menjalankan
+Service worker butuh `localhost` atau HTTPS (jangan buka lewat `file://`).
+
+```bash
+python3 -m http.server 8080
+```
+
+Buka `http://localhost:8080`. Untuk HP/instal PWA, host di layanan HTTPS statis (GitHub Pages, Netlify, dsb.).
+
+## Tes
+```bash
+npm test
+```
+Menjalankan unit test (Node ≥ 20, tanpa dependensi) untuk normalisasi & pencocokan Arab, penjadwalan murajaah,
+streak, migrasi, dan impor.
+
+## Struktur
+| Berkas | Isi |
+|---|---|
+| `js/arabic.js` | normalisasi, pencocokan bacaan, pemisahan basmalah, petunjuk huruf awal |
+| `js/srs.js`, `js/progress.js` | penjadwalan murajaah dan model progres (murni, teruji) |
+| `js/api.js`, `js/db.js` | klien API + cache IndexedDB |
+| `js/state.js` | pengaturan & progres di localStorage, event perubahan |
+| `js/reader.js`, `js/review.js`, `js/setoran.js`, `js/player.js` | tampilan Belajar, Murajaah, popup Setoran, pemutar audio |
+| `js/app.js` | router, Beranda, Progres, Pengaturan |
+| `sw.js` | service worker (naikkan `VERSION` setiap rilis) |
+
+## Batasan penting
+- Cocokkan teks dengan mushaf standar yang Anda gunakan. Untuk pemakaian serius, verifikasi sumber dan pin versi dataset.
+- Pencocokan suara **bukan** penilai tajwid, makhraj, atau harakat — hanya membandingkan kata hasil transkripsi browser,
+  yang bisa keliru untuk bacaan Al-Qur'an. Setoran kepada guru tetap rujukan.
+- Audio dan pengenalan suara memerlukan internet; audio tidak di-cache.
+- Progres hanya di perangkat ini (localStorage). Ekspor berkala.
+- 6.236 dipakai sebagai angka acuan jumlah ayat; sistem penomoran dapat berbeda.

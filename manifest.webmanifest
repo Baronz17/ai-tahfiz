@@ -1,0 +1,23 @@
+{
+  "name": "AI Tahfiz",
+  "short_name": "Tahfiz",
+  "description": "Latihan hafalan Al-Qur'an: belajar, setoran suara, dan murajaah terjadwal.",
+  "id": "./",
+  "start_url": "./#/beranda",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f6f4ec",
+  "theme_color": "#0f5132",
+  "lang": "id",
+  "dir": "ltr",
+  "categories": ["education", "books"],
+  "icons": [
+    { "src": "./icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "./icon-maskable.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Murajaah", "url": "./#/murajaah" },
+    { "name": "Belajar", "url": "./#/belajar" }
+  ]
+}

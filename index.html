@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0f5132">
+<meta name="description" content="AI Tahfiz: latihan hafalan Al-Qur'an, setoran suara, dan murajaah terjadwal.">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="./icon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri+Quran&display=swap">
+<link rel="stylesheet" href="./styles.css">
+<title>AI Tahfiz</title>
+<script>
+  // Terapkan tema sebelum render pertama agar tidak berkedip.
+  try { const t = JSON.parse(localStorage.getItem('aitahfiz-settings-v1'))?.theme; if (t && t !== 'auto') document.documentElement.dataset.theme = t; } catch {}
+</script>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <img src="./icon.svg" alt="" width="36" height="36">
+    <div><h1>AI Tahfiz</h1><p>Hafalkan · Setorkan · Murajaah</p></div>
+  </div>
+  <span id="netBadge" class="pill" aria-live="polite">Online</span>
+</header>
+
+<nav class="nav" aria-label="Navigasi utama">
+  <a href="#/beranda" data-view="beranda"><span aria-hidden="true">⌂</span>Beranda</a>
+  <a href="#/belajar" data-view="belajar"><span aria-hidden="true">📖</span>Belajar</a>
+  <a href="#/murajaah" data-view="murajaah"><span aria-hidden="true">↻</span>Murajaah<b id="dueBadge" class="badge hidden">0</b></a>
+  <a href="#/progres" data-view="progres"><span aria-hidden="true">▤</span>Progres</a>
+  <a href="#/pengaturan" data-view="pengaturan"><span aria-hidden="true">⚙</span>Atur</a>
+</nav>
+
+<main id="main">
+  <section id="view-beranda" class="view" aria-labelledby="h-beranda">
+    <h2 id="h-beranda" class="sr-only">Beranda</h2>
+    <div class="grid">
+      <article class="card span-2 hero">
+        <div>
+          <p class="eyebrow">Lanjutkan hafalan</p>
+          <h3 id="continueTitle">Al-Fatihah · Ayat 1</h3>
+          <p id="continueMeta" class="muted">Mulai dari surah pertama.</p>
+        </div>
+        <a class="btn" id="continueBtn" href="#/belajar">Lanjutkan</a>
+      </article>
+      <article class="card">
+        <p class="eyebrow">Target hari ini</p>
+        <div class="stat"><span id="homeToday">0</span><small> / <span id="homeTarget">5</span> ayat baru</small></div>
+        <div class="bar"><span id="homeTodayBar"></span></div>
+        <p class="muted small" id="homeTodayNote">Utamakan ketepatan, bukan kecepatan.</p>
+      </article>
+      <article class="card">
+        <p class="eyebrow">Murajaah</p>
+        <div class="stat"><span id="homeDue">0</span><small> ayat jatuh tempo</small></div>
+        <p class="muted small" id="homeUpcoming">—</p>
+        <a class="btn secondary" href="#/murajaah">Mulai murajaah</a>
+      </article>
+      <article class="card">
+        <p class="eyebrow">Konsistensi</p>
+        <div class="stat"><span id="homeStreak">0</span><small> hari beruntun</small></div>
+        <p class="muted small">Hari aktif = ada ayat baru atau murajaah.</p>
+      </article>
+      <article class="card">
+        <p class="eyebrow">Total hafalan</p>
+        <div class="stat"><span id="homeTotal">0</span><small> ayat</small></div>
+        <div class="bar"><span id="homeTotalBar"></span></div>
+        <p class="muted small" id="homePercent">0% dari 6.236 ayat</p>
+      </article>
+    </div>
+  </section>
+
+  <section id="view-belajar" class="view hidden" aria-labelledby="h-belajar">
+    <div class="card reader-head">
+      <div class="row wrap">
+        <label class="grow"><span class="sr-only">Surah</span><select id="surahSelect" aria-label="Pilih surah"><option>Memuat daftar surah…</option></select></label>
+        <button id="prevSurah" class="icon-btn" aria-label="Surah sebelumnya">‹</button>
+        <button id="nextSurah" class="icon-btn" aria-label="Surah berikutnya">›</button>
+      </div>
+      <div class="surah-title">
+        <div>
+          <h2 id="h-belajar">Al-Fatihah</h2>
+          <p id="surahMeta" class="muted small">—</p>
+        </div>
+        <div id="surahArabic" class="surah-arabic" lang="ar" dir="rtl"></div>
+      </div>
+      <div class="row wrap tools">
+        <div class="seg" role="radiogroup" aria-label="Mode tampilan ayat">
+          <button role="radio" data-mode="show">Tampil</button>
+          <button role="radio" data-mode="hint">Huruf awal</button>
+          <button role="radio" data-mode="hide">Sembunyi</button>
+        </div>
+        <label class="check"><input type="checkbox" id="toggleTranslation"> Terjemahan</label>
+      </div>
+      <details class="player-setup">
+        <summary>🔁 Putar berulang (talaqqi)</summary>
+        <div class="row wrap">
+          <label>Dari ayat <select id="rangeFrom"></select></label>
+          <label>sampai <select id="rangeTo"></select></label>
+          <label>Ulang tiap ayat <select id="repeatEach">
+            <option>1</option><option>3</option><option>5</option><option>7</option><option>10</option><option>20</option>
+          </select>×</label>
+          <label class="check"><input type="checkbox" id="loopRange"> Ulangi rentang</label>
+          <button id="playRange">▶ Putar</button>
+        </div>
+      </details>
+      <p id="sourceStatus" class="muted small" aria-live="polite"></p>
+    </div>
+    <div id="bismillah" class="bismillah hidden" lang="ar" dir="rtl">بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ</div>
+    <div id="verses" class="verses"></div>
+  </section>
+
+  <section id="view-murajaah" class="view hidden" aria-labelledby="h-murajaah">
+    <div class="grid stats-3">
+      <article class="card"><p class="eyebrow">Jatuh tempo</p><div class="stat" id="revDue">0</div></article>
+      <article class="card"><p class="eyebrow">7 hari ke depan</p><div class="stat" id="revUpcoming">0</div></article>
+      <article class="card"><p class="eyebrow">Sedang dihafal</p><div class="stat" id="revLearning">0</div></article>
+    </div>
+    <article class="card" id="reviewCard">
+      <h2 id="h-murajaah">Sesi murajaah</h2>
+      <div id="reviewBody"></div>
+    </article>
+  </section>
+
+  <section id="view-progres" class="view hidden" aria-labelledby="h-progres">
+    <h2 id="h-progres" class="sr-only">Progres</h2>
+    <div class="grid stats-3">
+      <article class="card"><p class="eyebrow">Ayat hafal</p><div class="stat" id="pTotal">0</div><p class="muted small" id="pPercent">0%</p></article>
+      <article class="card"><p class="eyebrow">Hari beruntun</p><div class="stat" id="pStreak">0</div></article>
+      <article class="card"><p class="eyebrow">Murajaah hari ini</p><div class="stat" id="pReviewed">0</div></article>
+      <article class="card span-3">
+        <h3>Aktivitas 15 minggu terakhir</h3>
+        <div id="heatmap" class="heatmap" role="img" aria-label="Peta aktivitas harian"></div>
+        <p class="muted small">Warna lebih pekat = lebih banyak ayat dihafal/dimurajaah pada hari itu.</p>
+      </article>
+      <article class="card span-3">
+        <h3>Per surah</h3>
+        <div id="perSurah" class="per-surah"></div>
+      </article>
+      <article class="card span-3">
+        <h3>Akses offline</h3>
+        <p class="muted small" id="offlineInfo">—</p>
+        <div class="bar"><span id="offlineBar"></span></div>
+        <div class="row wrap"><button id="downloadAll" class="secondary">Unduh semua surah</button></div>
+      </article>
+      <article class="card span-3">
+        <h3>Data belajar</h3>
+        <p class="muted small">Progres tersimpan di browser perangkat ini saja. Ekspor berkala agar tidak hilang saat data browser dibersihkan, dan gunakan impor untuk pindah perangkat.</p>
+        <div class="row wrap">
+          <button id="exportData">Ekspor (JSON)</button>
+          <label class="btn secondary" for="importFile">Impor JSON</label>
+          <input type="file" id="importFile" accept="application/json,.json" class="sr-only">
+          <button id="clearData" class="ghost danger">Hapus progres</button>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section id="view-pengaturan" class="view hidden" aria-labelledby="h-pengaturan">
+    <article class="card">
+      <h2 id="h-pengaturan">Pengaturan</h2>
+      <div class="form">
+        <label>Target ayat baru per hari <input type="number" id="setTarget" min="1" max="100" inputmode="numeric"></label>
+        <label>Qari (audio)
+          <select id="setReciter">
+            <option value="ar.alafasy">Mishary Rashid Alafasy</option>
+            <option value="ar.husary">Mahmoud Khalil Al-Husary</option>
+            <option value="ar.minshawi">Mohamed Siddiq Al-Minshawi</option>
+          </select>
+        </label>
+        <label>Ukuran huruf Arab <input type="range" id="setFont" min="22" max="48" step="2"></label>
+        <p class="arabic preview" lang="ar" dir="rtl">ٱلْحَمْدُ لِلَّهِ رَبِّ ٱلْعَٰلَمِينَ</p>
+        <label>Tema
+          <select id="setTheme"><option value="auto">Ikuti sistem</option><option value="light">Terang</option><option value="dark">Gelap</option></select>
+        </label>
+      </div>
+    </article>
+    <article class="card">
+      <h2>Tentang</h2>
+      <p>AI Tahfiz membantu menghafal dengan siklus: <b>dengar &amp; baca</b> → <b>hafalkan</b> dengan mode huruf awal/sembunyi → <b>setor</b> dengan suara → <b>murajaah</b> terjadwal (pengulangan berjarak).</p>
+      <div class="notice">
+        <b>Penting:</b> teks Arab diambil dari AlQuran Cloud (edisi <code>quran-uthmani</code>), terjemahan dari edisi <code>id.indonesian</code>. Cocokkan dengan mushaf standar yang Anda gunakan.
+        Pencocokan suara hanya membandingkan kata hasil transkripsi browser dengan teks ayat — <b>bukan</b> penilaian tajwid, makhraj, atau harakat, dan bisa keliru. Setoran kepada guru/ustadz tetap menjadi rujukan.
+      </div>
+      <ul class="muted small">
+        <li>Offline mencakup aplikasi dan surah yang sudah dibuka/diunduh. Audio dan pengenalan suara memerlukan internet.</li>
+        <li>Pengenalan suara bergantung pada dukungan browser (umumnya Chrome/Edge).</li>
+        <li>Persentase memakai 6.236 ayat sebagai angka acuan umum; sistem penomoran dapat berbeda.</li>
+      </ul>
+      <p class="muted small">Versi 2.0</p>
+    </article>
+  </section>
+</main>
+
+<div id="playerBar" class="player-bar hidden" role="region" aria-label="Pemutar audio">
+  <span id="playerLabel">—</span>
+  <button id="playerPause" class="icon-btn" aria-label="Jeda">⏸</button>
+  <button id="playerStop" class="icon-btn" aria-label="Hentikan">⏹</button>
+</div>
+
+<button id="openSetoran" class="fab" aria-haspopup="dialog" aria-controls="setoranModal">🎙 <span>Setoran</span></button>
+
+<div id="setoranModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="setoranTitle">
+  <div class="sheet">
+    <div class="sheet-head">
+      <div>
+        <h2 id="setoranTitle">Setoran suara</h2>
+        <p id="setoranRef" class="muted small">—</p>
+      </div>
+      <button id="closeSetoran" class="icon-btn" aria-label="Tutup">✕</button>
+    </div>
+    <div class="row wrap">
+      <button id="setoranPrev" class="ghost small-btn">‹ Ayat sebelumnya</button>
+      <button id="setoranNext" class="ghost small-btn">Ayat berikutnya ›</button>
+      <label class="check"><input type="checkbox" id="setoranShowText"> Lihat teks</label>
+    </div>
+    <div id="setoranText" class="arabic target hidden" lang="ar" dir="rtl"></div>
+    <div class="row wrap">
+      <button id="startListen">🎙 Mulai</button>
+      <button id="stopListen" class="secondary" disabled>■ Selesai</button>
+    </div>
+    <p id="listenStatus" class="muted small" aria-live="polite"></p>
+    <div id="transcript" class="transcript" lang="ar" dir="rtl" aria-live="polite"></div>
+    <div id="setoranResult" class="hidden">
+      <div class="score"><span id="scoreValue">0%</span><small id="scoreNote"></small></div>
+      <div id="scoreWords" class="arabic words" lang="ar" dir="rtl"></div>
+    </div>
+    <p class="muted small">Nilai sendiri hafalan ayat ini:</p>
+    <div class="grades" id="setoranGrades"></div>
+    <p class="muted tiny">Transkripsi browser bukan penilai tajwid dan dapat keliru mengenali lafaz Al-Qur'an.</p>
+  </div>
+</div>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<script type="module" src="./js/app.js"></script>
+</body>
+</html>
