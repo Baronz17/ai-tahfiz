@@ -8,6 +8,9 @@ export const TEXT_EDITION = 'quran-uthmani';
 export const TRANSLATION_EDITION = 'id.indonesian';
 const LIST_KEY = 'surah-list', surahKey = n => `surah-${n}`;
 
+// hizbQuarter 1–240 → hizb 1–60.
+const hizbOf = a => (a.hizbQuarter ? Math.ceil(a.hizbQuarter / 4) : null);
+
 async function fetchJSON(url) {
   const r = await fetch(url);
   if (!r.ok) throw new Error('HTTP ' + r.status);
@@ -47,7 +50,7 @@ export async function getSurah(n) {
   const ayahs = text.ayahs.map((a, i) => {
     const { bismillah, text: t } = splitBismillah(n, a.numberInSurah, a.text);
     return {
-      n: a.numberInSurah, global: a.number, juz: a.juz, page: a.page,
+      n: a.numberInSurah, global: a.number, juz: a.juz, page: a.page, hizb: hizbOf(a),
       text: t, bismillah, translation: trans?.ayahs?.[i]?.text || '',
     };
   });
@@ -70,7 +73,7 @@ export async function migrateLegacyCache() {
       if (!d?.ayahs?.length || await db.get(surahKey(num))) continue;
       const ayahs = d.ayahs.map(a => {
         const { bismillah, text } = splitBismillah(num, a.numberInSurah, a.text);
-        return { n: a.numberInSurah, global: a.number, juz: a.juz, page: a.page, text, bismillah, translation: a.translation || '' };
+        return { n: a.numberInSurah, global: a.number, juz: a.juz, page: a.page, hizb: hizbOf(a), text, bismillah, translation: a.translation || '' };
       });
       await db.set(surahKey(num), { number: num, name: d.name, englishName: d.englishName, ayahs, edition: TEXT_EDITION, savedAt: Date.now() });
     }

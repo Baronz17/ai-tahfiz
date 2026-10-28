@@ -87,7 +87,7 @@
         </div>
         <div id="surahArabic" class="surah-arabic" lang="ar" dir="rtl"></div>
       </div>
-      <div class="row wrap tools">
+      <div class="row wrap tools" id="listTools">
         <div class="seg" role="radiogroup" aria-label="Mode tampilan ayat">
           <button role="radio" data-mode="show">Tampil</button>
           <button role="radio" data-mode="hint">Huruf awal</button>
@@ -109,8 +109,10 @@
       </details>
       <p id="sourceStatus" class="muted small" aria-live="polite"></p>
     </div>
+    <div id="mushafInfo" class="mushaf-info hidden" aria-live="polite"><strong id="miSurah"></strong><span id="miPage"></span></div>
     <div id="bismillah" class="bismillah hidden" lang="ar" dir="rtl">بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ</div>
     <div id="verses" class="verses"></div>
+    <div id="mushaf" class="mushaf hidden"></div>
   </section>
 
   <section id="view-murajaah" class="view hidden" aria-labelledby="h-murajaah">
@@ -181,6 +183,7 @@
     <article class="card">
       <h2>Tentang</h2>
       <p>AI Tahfiz membantu menghafal dengan siklus: <b>dengar &amp; baca</b> → <b>hafalkan</b> dengan mode huruf awal/sembunyi → <b>setor</b> dengan suara → <b>murajaah</b> terjadwal (pengulangan berjarak).</p>
+      <p><b>Tampilan mushaf:</b> ketuk ikon mata untuk menyembunyikan ayat, lalu tekan mikrofon dan mulai membaca — kata yang Anda baca muncul otomatis, yang terlewat ditandai merah di daftar <i>Kesalahan</i>. Ketuk nomor ayat untuk memilih titik mulai. Teks mengalir per halaman mushaf Madinah (nomor halaman/juz/hizb dari data API), tetapi pemenggalan barisnya tidak sama persis dengan cetakan 15 baris.</p>
       <div class="notice">
         <b>Penting:</b> teks Arab diambil dari AlQuran Cloud (edisi <code>quran-uthmani</code>), terjemahan dari edisi <code>id.indonesian</code>. Cocokkan dengan mushaf standar yang Anda gunakan.
         Pencocokan suara hanya membandingkan kata hasil transkripsi browser dengan teks ayat — <b>bukan</b> penilaian tajwid, makhraj, atau harakat, dan bisa keliru. Setoran kepada guru/ustadz tetap menjadi rujukan.
@@ -190,7 +193,7 @@
         <li>Pengenalan suara bergantung pada dukungan browser (umumnya Chrome/Edge).</li>
         <li>Persentase memakai 6.236 ayat sebagai angka acuan umum; sistem penomoran dapat berbeda.</li>
       </ul>
-      <p class="muted small">Versi 2.0</p>
+      <p class="muted small">Versi 2.1</p>
     </article>
   </section>
 </main>
@@ -201,7 +204,35 @@
   <button id="playerStop" class="icon-btn" aria-label="Hentikan">⏹</button>
 </div>
 
-<button id="openSetoran" class="fab" aria-haspopup="dialog" aria-controls="setoranModal">🎙 <span>Setoran</span></button>
+<div id="readerBar" class="reader-bar" role="toolbar" aria-label="Alat hafalan">
+  <button id="rbMistakes" type="button" class="rb-pill" aria-label="Kesalahan">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11M4 6l.01 0M4 12l.01 0M4 18l.01 0"/></svg>
+    <span class="rb-label">Kesalahan</span><b id="rbMistakeCount" class="count hidden">0</b>
+  </button>
+  <button id="rbView" type="button" class="rb-icon" aria-pressed="false" aria-label="Ganti tampilan">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6.5C10.3 5.2 7.8 4.5 4 4.5v13c3.8 0 6.3.7 8 2 1.7-1.3 4.2-2 8-2v-13c-3.8 0-6.3.7-8 2Zm0 0v13"/></svg>
+  </button>
+  <button id="rbHide" type="button" class="rb-icon" aria-pressed="false" aria-label="Sembunyikan ayat untuk hafalan">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18M10.6 5.1A10 10 0 0 1 12 5c5 0 8.5 4.2 9.5 7-.4 1.1-1.2 2.5-2.4 3.8M6.6 6.6C4.6 7.9 3.1 10 2.5 12c1 2.8 4.5 7 9.5 7 1.9 0 3.6-.6 5-1.5M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>
+  </button>
+  <button id="rbPeekWord" type="button" class="rb-icon hidden" aria-label="Buka satu kata berikutnya" title="Buka satu kata">‹</button>
+  <button id="rbPeekAyah" type="button" class="rb-icon hidden" aria-label="Buka sisa ayat ini" title="Buka sisa ayat">«</button>
+</div>
+
+<button id="openSetoran" class="fab" aria-haspopup="dialog">
+  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3Zm-7 9a7 7 0 0 0 14 0M12 19v3"/></svg>
+  <span>Setoran</span>
+</button>
+
+<div id="sheet" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+  <div class="sheet">
+    <div class="sheet-head">
+      <div><h2 id="sheetTitle"></h2><p id="sheetSub" class="muted small"></p></div>
+      <button id="sheetClose" class="icon-btn" aria-label="Tutup">✕</button>
+    </div>
+    <div id="sheetBody" class="sheet-body"></div>
+  </div>
+</div>
 
 <div id="setoranModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="setoranTitle">
   <div class="sheet">
