@@ -27,12 +27,15 @@ test('follow: interim only previews, final commits', () => {
   assert.equal(f.preview.size, 0);
 });
 
-test('follow: skipped words become mistakes', () => {
+test('follow: skipped words become "ragu" first, mistakes when settled', () => {
   const f = new Follower(IKHLAS);
   f.hear('قل هو الله احد', true);
   f.hear('لم يلد', true); // melewatkan "الله الصمد"
-  assert.deepEqual([...f.mistakes].sort((a, b) => a - b), [4, 5]);
+  assert.deepEqual([...f.pending].sort((a, b) => a - b), [4, 5]);
+  assert.equal(f.mistakes.size, 0);
   assert.equal(f.cursor, 8);
+  f.settle();
+  assert.deepEqual([...f.mistakes].sort((a, b) => a - b), [4, 5]);
   const s = f.summary();
   assert.deepEqual(s.read, [1]); // ayat 2 terlewat seluruhnya: bukan "dibaca"
   assert.deepEqual(s.clean, [1]);
@@ -81,4 +84,41 @@ test('follow: peek word/ayah and setStart', () => {
   assert.equal(f.peeked.size, 4); // sebelum titik mulai tetap
   f.setStart(0);
   assert.equal(f.peeked.size, 0);
+});
+
+test('follow: a "ragu" word is rescued when the reader repeats it', () => {
+  const f = new Follower(IKHLAS);
+  f.hear('قل هو الله احد', true);
+  f.hear('الله لم يلد', true); // "الصمد" terlewat
+  assert.ok(f.pending.has(5));
+  f.hear('الصمد لم يلد ولم يولد', true); // mengulang dari kata yang terlewat
+  assert.equal(f.pending.has(5), false);
+  assert.ok(f.done.has(5));
+  assert.equal(f.cursor, 10);
+});
+
+test('follow: ragu becomes a mistake once far behind the cursor', () => {
+  const f = new Follower(IKHLAS);
+  f.hear('قل هو الله احد', true);
+  f.hear('الصمد', true); // "الله" (indeks 4) terlewat
+  f.hear('لم يلد ولم يولد ولم يكن له كفوا احد', true);
+  assert.ok(f.mistakes.has(4), 'jauh di belakang -> pasti salah');
+});
+
+test('follow: picks the alternative that best matches the expected text', () => {
+  const f = new Follower(IKHLAS);
+  const r = f.hear(['قل هو', 'قل هو الله احد'], true); // alternatif kedua lebih lengkap
+  assert.equal(r.heard, 'قل هو الله احد');
+  assert.equal(f.cursor, 4);
+  assert.equal(f.pending.size, 0);
+});
+
+test('follow: records what was heard instead of a skipped word', () => {
+  const f = new Follower(IKHLAS);
+  f.hear('قل هو الله احد', true);
+  f.hear('الله الصمد من يلد', true); // "لم" terdengar sebagai "من"
+  assert.ok(f.pending.has(6));
+  assert.equal(f.heardAs.get(6), 'من');
+  assert.deepEqual(f.summary().problems[0].heard, ['من']);
+  assert.equal(f.log.length, 2);
 });

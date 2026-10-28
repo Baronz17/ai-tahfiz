@@ -231,6 +231,7 @@ body.playing .fab { bottom: calc(136px + env(safe-area-inset-bottom)); }
 .mushaf:not(.hide-on) .w.done { color: var(--ok); }
 .w.err { color: var(--bad); background: var(--bad-soft); }
 .w.peek { color: var(--warn); }
+.w.ragu { color: var(--bad); opacity: .7; text-decoration: underline dotted var(--bad); text-underline-offset: .35em; }
 .w.cur { box-shadow: inset 0 -3px 0 var(--accent); }
 
 /* Bilah alat bawah (halaman Belajar) + tombol mikrofon */
@@ -280,3 +281,14 @@ body.reading main { padding-bottom: 180px; }
 .chips b.err { background: var(--bad-soft); color: var(--bad); }
 .chips b.peek { background: var(--warn-soft); color: var(--warn); }
 .how { margin: 0; padding-left: 20px; display: grid; gap: 4px; }
+
+/* Teks yang terdengar (diagnosis transkripsi) */
+.heard { position: fixed; z-index: 43; left: 12px; right: 12px; bottom: calc(140px + env(safe-area-inset-bottom)); max-width: 640px; margin: 0 auto; display: flex; align-items: center; gap: 10px; padding: 6px 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 4px 14px #0002; }
+.heard-label { flex: none; font-size: .72rem; font-weight: 650; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+#heardText { flex: 1; min-width: 0; font-family: "Amiri", "Noto Naskh Arabic", serif; font-size: 1.15rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#heardText .interim { color: var(--muted); }
+@media (min-width: 760px) { .heard { bottom: 84px; } }
+.mistake { flex-wrap: wrap; }
+.heard-as { flex-basis: 100%; text-align: right; color: var(--muted); font-family: "Amiri", serif; font-size: .95rem; }
+.heard-log summary { cursor: pointer; color: var(--primary); font-weight: 600; font-size: .9rem; }
+.heard-log ol { margin: 6px 0 0; font-family: "Amiri", serif; font-size: 1.05rem; }

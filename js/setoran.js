@@ -1,6 +1,6 @@
 // Popup setoran: dengarkan bacaan lewat Web Speech API, bandingkan dengan teks ayat, lalu nilai sendiri.
 import { $, h, toast } from './dom.js';
-import { compareRecitation } from './arabic.js';
+import { compareRecitation, PROFILES } from './arabic.js';
 import { GRADES, GRADE_LABEL, nextInterval, describeInterval } from './srs.js';
 import { state, gradeAyah, surahLabel } from './state.js';
 import { ayahKey } from './progress.js';
@@ -8,6 +8,23 @@ import { ayahKey } from './progress.js';
 const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 let target = null;          // { surah, ayahs, index }
 let recognition = null, finalText = '', interimText = '', listening = false, lastFocus = null;
+let resultAlts = []; // per hasil transkripsi: daftar alternatif (terbaik menurut browser lebih dulu)
+const profile = () => PROFILES[state.settings.sensitivity] || PROFILES.normal;
+
+// Pilih alternatif per hasil transkripsi yang membuat bacaan paling cocok dengan teks ayat.
+function bestSpoken(target) {
+  let acc = '';
+  for (const alts of resultAlts) {
+    let best = null, bestScore = -1;
+    for (const alt of alts) {
+      const cand = `${acc} ${alt}`.trim();
+      const sc = compareRecitation(target, cand, profile()).matched;
+      if (sc > bestScore) { best = cand; bestScore = sc; }
+    }
+    acc = best ?? acc;
+  }
+  return acc;
+}
 let onGradedCb = null;
 
 const modal = () => $('#setoranModal');
@@ -42,6 +59,7 @@ function renderTarget() {
   $('#setoranPrev').disabled = target.index === 0;
   $('#setoranNext').disabled = target.index >= target.ayahs.length - 1;
   finalText = interimText = '';
+  resultAlts = [];
   renderTranscript();
   $('#setoranResult').classList.add('hidden');
   $('#listenStatus').textContent = Recognition
@@ -76,9 +94,10 @@ function grade(g) {
 }
 
 function showResult() {
-  const spoken = (finalText + ' ' + interimText).trim();
+  const spoken = bestSpoken(current().text) || (finalText + ' ' + interimText).trim();
   if (!spoken) { $('#listenStatus').textContent = 'Tidak ada suara yang dikenali. Coba lagi lebih dekat ke mikrofon.'; return; }
-  const r = compareRecitation(current().text, spoken);
+  if (spoken !== finalText) { finalText = spoken; interimText = ''; renderTranscript(); } // tampilkan alternatif yang dipakai
+  const r = compareRecitation(current().text, spoken, profile());
   const pct = Math.round(r.score * 100);
   $('#scoreValue').textContent = `${pct}%`;
   $('#scoreNote').textContent = `${r.matched}/${r.total} kata cocok${r.extra ? ` · ${r.extra} kata tambahan` : ''} (perkiraan)`;
@@ -97,10 +116,13 @@ function startListening() {
   recognition.lang = 'ar-SA';
   recognition.interimResults = true;
   recognition.continuous = true;
+  recognition.maxAlternatives = 5;
   finalText = interimText = '';
+  resultAlts = [];
   renderTranscript();
   $('#setoranResult').classList.add('hidden');
   recognition.onresult = e => {
+    resultAlts = Array.from(e.results, r => Array.from(r, a => a.transcript));
     let fin = '', interim = '';
     for (let i = 0; i < e.results.length; i++) {
       if (e.results[i].isFinal) fin += e.results[i][0].transcript + ' ';

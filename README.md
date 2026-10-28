@@ -9,6 +9,11 @@ PWA (tanpa build tool, tanpa dependensi) untuk menghafal Al-Qur'an dengan siklus
   **Ikuti bacaan:** tekan mikrofon dan baca dari hafalan — kata yang terdengar cocok muncul otomatis, kata terlewat
   ditandai merah, lalu ringkasan kesalahan bisa langsung dijadikan jadwal murajaah. Ketuk nomor ayat untuk menu
   (mulai hafalan dari ayat ini, putar, setor, tandai).
+- **Akurasi pencocokan suara** — memilih tebakan transkripsi terbaik dari beberapa alternatif, toleran huruf yang
+  bunyinya mirip (س/ص/ث, ذ/ز/ظ, ت/ط, ك/ق, ه/ح, ء/ع/ا) dan kata yang digabung/dipecah pengenal suara; kata terlewat
+  ditandai *ragu* dulu dan bisa "diselamatkan" bila dibaca ulang. Kepekaan *Ketat/Normal/Longgar* di Pengaturan.
+  Bilah **Terdengar** menampilkan teks mentah dari browser, dan daftar Kesalahan menunjukkan apa yang terdengar di
+  posisi kata yang salah — untuk membedakan "browser salah dengar" dari "aplikasi salah cocok".
 - **Daftar ayat** — teks Utsmani + terjemahan Indonesia (AlQuran Cloud API), basmalah dipisah dari ayat 1.
   Mode tampilan: *Tampil*, *Huruf awal* (petunjuk), *Sembunyi* (ketuk untuk membuka).
 - **Putar berulang (talaqqi)** — rentang ayat, ulang tiap ayat N×, opsi ulangi rentang, pilihan qari, ayat yang diputar disorot.
