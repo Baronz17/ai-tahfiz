@@ -1,5 +1,5 @@
-// Tampilan Belajar: baca surah, mode hafalan (huruf awal/sembunyi), audio berulang, tandai hafalan.
-import { $, $$, h, toast } from './dom.js';
+// Tampilan Belajar: baca surah (daftar ayat atau mushaf), mode hafalan, audio berulang, tandai hafalan.
+import { $, $$, h, toast, openSheet, closeSheet } from './dom.js';
 import { getSurah } from './api.js';
 import { state, on, saveSettings, gradeAyah, setLast, surahMeta, replaceProgress } from './state.js';
 import { ayahKey, removeAyah } from './progress.js';
@@ -8,10 +8,14 @@ import { firstLetterHint } from './arabic.js';
 import { localDate } from './dates.js';
 import { player, onPlayer } from './player.js';
 import { openSetoran } from './setoran.js';
+import * as mushaf from './mushaf.js';
 
 let surah = null, loadToken = 0, observer = null, lastSaveTimer = null;
 
 export function currentSurah() { return surah; }
+
+const isMushaf = () => state.settings.view === 'mushaf';
+const ayahEl = n => (isMushaf() ? $(`#mushaf .ay[data-ayah="${n}"]`) : document.getElementById(`ayah-${n}`));
 
 const signature = rec => (rec ? `${rec.status}|${rec.due}` : '');
 
@@ -101,15 +105,39 @@ function watchPosition() {
     clearTimeout(lastSaveTimer);
     lastSaveTimer = setTimeout(() => setLast(surah.number, Math.min(...visible)), 600);
   }, { rootMargin: '-35% 0px -55% 0px' });
-  $$('.verse').forEach(v => observer.observe(v));
+  $$(isMushaf() ? '#mushaf .ay' : '#verses .verse').forEach(v => observer.observe(v));
+}
+
+// Gambar surah sesuai tampilan aktif (daftar/mushaf).
+function render() {
+  const m = isMushaf();
+  document.body.classList.toggle('mushaf-view', m);
+  $('#verses').classList.toggle('hidden', m);
+  $('#mushaf').classList.toggle('hidden', !m);
+  $('#mushafInfo').classList.toggle('hidden', !m);
+  $('#listTools').classList.toggle('hidden', m);
+  $('#bismillah').classList.toggle('hidden', m || !surah.ayahs[0]?.bismillah);
+  if (m) {
+    $('#verses').replaceChildren();
+    mushaf.renderMushaf(surah, { hide: state.settings.hideMode === 'hide' });
+  } else {
+    mushaf.stopFollow(false);
+    $('#mushaf').replaceChildren();
+    $('#verses').replaceChildren(...surah.ayahs.map(verseEl));
+    applyDisplay();
+  }
+  watchPosition();
+  updateBar();
 }
 
 export async function showSurah(n, focusAyah = null) {
   n = Math.min(114, Math.max(1, Number(n) || 1));
   if (surah?.number === n) { if (focusAyah) focus(focusAyah); return; }
   const token = ++loadToken;
+  mushaf.stopFollow(false);
   $('#surahSelect').value = String(n);
-  $('#verses').replaceChildren(...Array.from({ length: 3 }, () => h('div', { class: 'skeleton' })));
+  const loading = isMushaf() ? $('#mushaf') : $('#verses');
+  loading.replaceChildren(...Array.from({ length: 3 }, () => h('div', { class: 'skeleton' })));
   $('#bismillah').classList.add('hidden');
   $('#sourceStatus').textContent = 'Memuat surah…';
   const meta = surahMeta(n);
@@ -122,8 +150,9 @@ export async function showSurah(n, focusAyah = null) {
   } catch {
     if (token !== loadToken) return;
     surah = null;
+    updateBar();
     $('#sourceStatus').textContent = '';
-    $('#verses').replaceChildren(h('div', { class: 'card empty' },
+    loading.replaceChildren(h('div', { class: 'card empty' },
       h('div', { class: 'big', text: '📡' }),
       h('p', { text: 'Surah ini belum tersimpan di perangkat. Sambungkan internet lalu coba lagi.' }),
       h('button', { onclick: () => showSurah(n, focusAyah), text: 'Coba lagi' })));
@@ -132,21 +161,109 @@ export async function showSurah(n, focusAyah = null) {
   $('#h-belajar').textContent = meta ? `${n}. ${meta.englishName}` : `${n}. ${surah.englishName}`;
   $('#surahArabic').textContent = surah.name || meta?.name || '';
   $('#surahMeta').textContent = [meta?.translation, `${surah.ayahs.length} ayat`, meta?.type === 'Medinan' ? 'Madaniyah' : meta?.type === 'Meccan' ? 'Makkiyah' : null].filter(Boolean).join(' · ');
-  $('#bismillah').classList.toggle('hidden', !surah.ayahs[0]?.bismillah);
-  $('#verses').replaceChildren(...surah.ayahs.map(verseEl));
-  applyDisplay();
+  render();
   fillRange();
-  watchPosition();
-  if (focusAyah) focus(focusAyah);
-  else { window.scrollTo({ top: 0 }); setLast(n, 1); }
+  if (focusAyah) {
+    if (isMushaf() && state.settings.hideMode === 'hide') mushaf.startFrom(focusAyah);
+    focus(focusAyah);
+  } else { window.scrollTo({ top: 0 }); setLast(n, 1); }
 }
 
-function focus(ayah) {
-  const el = document.getElementById(`ayah-${ayah}`);
+function focus(ayah, smooth = true) {
+  const el = ayahEl(ayah);
   if (!el) return;
-  $$('.verse.focus').forEach(v => v.classList.remove('focus'));
+  $$('.verse.focus, .ay.focus').forEach(v => v.classList.remove('focus'));
   el.classList.add('focus');
-  requestAnimationFrame(() => el.scrollIntoView({ behavior: 'smooth', block: 'center' }));
+  requestAnimationFrame(() => el.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'center' }));
+}
+
+// ---------- Bilah bawah: kesalahan, ganti tampilan, sembunyikan ayat, intip ----------
+function updateBar() {
+  const m = isMushaf(), hide = state.settings.hideMode === 'hide';
+  $('#rbView').setAttribute('aria-pressed', String(m));
+  $('#rbView').setAttribute('aria-label', m ? 'Ganti ke tampilan daftar ayat' : 'Ganti ke tampilan mushaf');
+  $('#rbHide').setAttribute('aria-pressed', String(hide));
+  $('#rbMistakes').classList.toggle('hidden', !m);
+  const n = mushaf.mistakeCount();
+  $('#rbMistakeCount').textContent = n;
+  $('#rbMistakeCount').classList.toggle('hidden', !m || !n);
+  const peek = m && mushaf.canPeek();
+  $('#rbPeekWord').classList.toggle('hidden', !(m && hide));
+  $('#rbPeekAyah').classList.toggle('hidden', !(m && hide));
+  $('#rbPeekWord').disabled = $('#rbPeekAyah').disabled = !peek;
+  updateFab();
+}
+
+export function updateFab() {
+  const fab = $('#openSetoran');
+  const reading = !$('#view-belajar').classList.contains('hidden');
+  fab.classList.toggle('round', reading);
+  fab.classList.toggle('live', mushaf.isFollowing());
+  fab.setAttribute('aria-pressed', String(mushaf.isFollowing()));
+  fab.setAttribute('aria-label', !reading ? 'Setoran suara'
+    : !isMushaf() ? 'Setoran suara untuk ayat ini'
+    : mushaf.isFollowing() ? 'Hentikan mikrofon' : 'Mulai baca dengan mikrofon');
+}
+
+function toggleView() {
+  if (!surah) return;
+  const at = state.progress.last.surah === surah.number ? state.progress.last.ayah : 1;
+  mushaf.stopFollow(false);
+  saveSettings({ view: isMushaf() ? 'list' : 'mushaf' });
+  render();
+  if (isMushaf() && state.settings.hideMode === 'hide') mushaf.startFrom(at);
+  focus(at, false);
+}
+
+function toggleHide() {
+  const on = state.settings.hideMode !== 'hide';
+  saveSettings({ hideMode: on ? 'hide' : 'show' });
+  if (isMushaf()) mushaf.setHidden(on); else applyDisplay();
+  updateBar();
+  toast(`Sembunyikan ayat: ${on ? 'aktif' : 'nonaktif'}`, 1600);
+}
+
+// Tombol mikrofon di halaman Belajar. Mushaf: ikuti bacaan langsung. Daftar: popup setoran.
+export function readerMic() {
+  if (!surah) return false;
+  if (isMushaf()) mushaf.toggleFollow();
+  else {
+    const last = state.progress.last;
+    openSetoran(surah, last.surah === surah.number ? last.ayah : 1);
+  }
+  return true;
+}
+
+export function leaveReader() { mushaf.stopFollow(false); updateFab(); }
+
+// Menu saat nomor ayat di mushaf diketuk.
+function ayahMenu(n) {
+  const a = surah.ayahs.find(x => x.n === n);
+  const rec = state.progress.items[ayahKey(surah.number, n)];
+  const hidden = state.settings.hideMode === 'hide';
+  const act = (label, fn, cls = 'ghost') => h('button', { type: 'button', class: cls, onclick: () => { closeSheet(); fn(); } }, label);
+  setLast(surah.number, n);
+  openSheet({
+    title: `${surahMeta(surah.number)?.englishName || surah.englishName} · Ayat ${n}`,
+    subtitle: [a.page && `Halaman ${a.page}`, a.juz && `Juz ${a.juz}`].filter(Boolean).join(' · '),
+    body: [
+      statusPill(rec),
+      hidden ? null : h('p', { class: 'arabic', lang: 'ar', dir: 'rtl', text: a.text }),
+      h('p', { class: 'translation', text: a.translation || 'Terjemahan belum tersedia.' }),
+      h('div', { class: 'sheet-actions' },
+        act('🎯 Hafalkan mulai ayat ini', () => {
+          if (!hidden) { saveSettings({ hideMode: 'hide' }); mushaf.setHidden(true, n); } else mushaf.startFrom(n);
+          updateBar();
+          focus(n);
+          toast('Ayat disembunyikan. Tekan mikrofon lalu mulai membaca.', 3000);
+        }, ''),
+        act('▶ Putar audio', () => playFrom(n, n)),
+        act('🎙 Setor & nilai ayat', () => openSetoran(surah, n)),
+        act(rec?.status === 'memorized' ? '✓ Lancar' : '✓ Tandai hafal', () => mark(n, GRADES.LANCAR)),
+        act('↺ Perlu diulang', () => mark(n, GRADES.LUPA)),
+        rec ? act('✕ Hapus status', () => reset(n)) : null),
+    ],
+  });
 }
 
 export function initReader() {
@@ -154,7 +271,7 @@ export function initReader() {
   $('#prevSurah').onclick = () => go(-1);
   $('#nextSurah').onclick = () => go(1);
   $('#surahSelect').onchange = e => { location.hash = `#/belajar/${e.target.value}`; };
-  $$('.seg button').forEach(b => b.onclick = () => { saveSettings({ hideMode: b.dataset.mode }); applyDisplay(); });
+  $$('.seg button').forEach(b => b.onclick = () => { saveSettings({ hideMode: b.dataset.mode }); applyDisplay(); updateBar(); });
   $('#toggleTranslation').onchange = e => { saveSettings({ showTranslation: e.target.checked }); applyDisplay(); };
   $('#repeatEach').value = String(state.settings.repeatEach);
   $('#repeatEach').onchange = e => saveSettings({ repeatEach: Number(e.target.value) });
@@ -166,16 +283,26 @@ export function initReader() {
     const from = Number($('#rangeFrom').value), to = Math.max(from, Number($('#rangeTo').value));
     playFrom(from, to);
   };
+  $('#rbView').onclick = toggleView;
+  $('#rbHide').onclick = toggleHide;
+  $('#rbMistakes').onclick = () => mushaf.openMistakes(n => focus(n));
+  $('#rbPeekWord').onclick = () => mushaf.peekWord();
+  $('#rbPeekAyah').onclick = () => mushaf.peekAyah();
+  mushaf.initMushaf({ onMarker: ayahMenu, onChange: updateBar, onFollow: updateFab });
   onPlayer(s => {
-    $$('.verse.playing').forEach(v => v.classList.remove('playing'));
+    $$('.verse.playing, .ay.playing').forEach(v => v.classList.remove('playing'));
     if (s.status === 'idle' || !s.item || s.item.surah !== surah?.number) return;
-    const el = document.getElementById(`ayah-${s.item.ayah}`);
+    const el = ayahEl(s.item.ayah);
     if (!el) return;
     el.classList.add('playing');
     const r = el.getBoundingClientRect();
-    if (r.top < 60 || r.bottom > innerHeight - 140) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (r.top < 60 || r.bottom > innerHeight - 160) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
   });
-  on(type => { if (type === 'progress' && surah) $$('.verse').forEach(v => refreshVerseIfChanged(v)); });
+  on(type => {
+    if (type !== 'progress' || !surah) return;
+    if (isMushaf()) mushaf.updateMarkers();
+    else $$('.verse').forEach(v => refreshVerseIfChanged(v));
+  });
 }
 
 // Sinkronkan tampilan ayat bila progres berubah (tombol, popup setoran, impor, dsb.).

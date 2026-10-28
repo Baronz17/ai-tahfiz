@@ -24,3 +24,26 @@ export function toast(msg, ms = 2600) {
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => t.classList.remove('show'), ms);
 }
+
+// Lembar bawah (bottom sheet) serbaguna untuk menu ayat dan ringkasan kesalahan.
+let sheetReturnFocus = null;
+export function openSheet({ title, subtitle = '', body = [] }) {
+  $('#sheetTitle').textContent = title;
+  $('#sheetSub').textContent = subtitle;
+  $('#sheetBody').replaceChildren(...body.filter(Boolean));
+  sheetReturnFocus = document.activeElement;
+  $('#sheet').classList.remove('hidden');
+  $('#sheetClose').focus();
+}
+
+export function closeSheet() {
+  if ($('#sheet').classList.contains('hidden')) return;
+  $('#sheet').classList.add('hidden');
+  sheetReturnFocus?.focus?.();
+}
+
+export function initSheet() {
+  $('#sheetClose').onclick = closeSheet;
+  $('#sheet').addEventListener('click', e => { if (e.target.id === 'sheet') closeSheet(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSheet(); });
+}

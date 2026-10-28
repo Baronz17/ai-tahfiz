@@ -4,7 +4,12 @@ PWA (tanpa build tool, tanpa dependensi) untuk menghafal Al-Qur'an dengan siklus
 **dengar & baca → hafalkan → setor suara → murajaah terjadwal**.
 
 ## Fitur
-- **Belajar** — teks Utsmani + terjemahan Indonesia (AlQuran Cloud API), basmalah dipisah dari ayat 1.
+- **Tampilan mushaf** (default) — teks mengalir per halaman dengan penanda ayat, banner surah, info Halaman | Juz | Hizb.
+  Bilah bawah: *Kesalahan*, ganti tampilan (mushaf/daftar), *sembunyikan ayat*, buka satu kata (‹) / sisa ayat («).
+  **Ikuti bacaan:** tekan mikrofon dan baca dari hafalan — kata yang terdengar cocok muncul otomatis, kata terlewat
+  ditandai merah, lalu ringkasan kesalahan bisa langsung dijadikan jadwal murajaah. Ketuk nomor ayat untuk menu
+  (mulai hafalan dari ayat ini, putar, setor, tandai).
+- **Daftar ayat** — teks Utsmani + terjemahan Indonesia (AlQuran Cloud API), basmalah dipisah dari ayat 1.
   Mode tampilan: *Tampil*, *Huruf awal* (petunjuk), *Sembunyi* (ketuk untuk membuka).
 - **Putar berulang (talaqqi)** — rentang ayat, ulang tiap ayat N×, opsi ulangi rentang, pilihan qari, ayat yang diputar disorot.
 - **Setoran suara** (popup, bisa dibuka dari mana saja) — Web Speech API (`ar-SA`), hasil dibandingkan per kata
@@ -37,6 +42,8 @@ streak, migrasi, dan impor.
 |---|---|
 | `js/arabic.js` | normalisasi, pencocokan bacaan, pemisahan basmalah, petunjuk huruf awal |
 | `js/srs.js`, `js/progress.js` | penjadwalan murajaah dan model progres (murni, teruji) |
+| `js/follow.js` | mesin "ikuti bacaan": posisi pembaca, kata terlewat, lompatan (murni, teruji) |
+| `js/mushaf.js` | tampilan mushaf, sembunyikan ayat, mikrofon, ringkasan kesalahan |
 | `js/api.js`, `js/db.js` | klien API + cache IndexedDB |
 | `js/state.js` | pengaturan & progres di localStorage, event perubahan |
 | `js/reader.js`, `js/review.js`, `js/setoran.js`, `js/player.js` | tampilan Belajar, Murajaah, popup Setoran, pemutar audio |
@@ -47,6 +54,10 @@ streak, migrasi, dan impor.
 - Cocokkan teks dengan mushaf standar yang Anda gunakan. Untuk pemakaian serius, verifikasi sumber dan pin versi dataset.
 - Pencocokan suara **bukan** penilai tajwid, makhraj, atau harakat — hanya membandingkan kata hasil transkripsi browser,
   yang bisa keliru untuk bacaan Al-Qur'an. Setoran kepada guru tetap rujukan.
+- Tampilan mushaf memakai nomor halaman/juz/hizb dari data API, tetapi pemenggalan baris tidak sama persis dengan
+  mushaf cetak 15 baris (butuh font per halaman seperti QCF).
+- "Ikuti bacaan" bergantung pada transkripsi browser: kata bisa salah ditandai merah, terutama huruf yang mirip
+  bunyinya atau bacaan cepat. Gunakan sebagai alat bantu, bukan penilai.
 - Audio dan pengenalan suara memerlukan internet; audio tidak di-cache.
 - Progres hanya di perangkat ini (localStorage). Ekspor berkala.
 - 6.236 dipakai sebagai angka acuan jumlah ayat; sistem penomoran dapat berbeda.

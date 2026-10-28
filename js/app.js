@@ -1,10 +1,10 @@
-import { $, $$, h, toast } from './dom.js';
+import { $, $$, h, toast, initSheet, closeSheet } from './dom.js';
 import { getSurahList, getSurah, cachedSurahNumbers, migrateLegacyCache } from './api.js';
 import { state, on, saveSettings, replaceProgress, surahLabel } from './state.js';
 import { stats, perSurah, parseImport, emptyProgress, TOTAL_AYAH } from './progress.js';
 import { localDate, addDays, diffDays } from './dates.js';
 import { player, onPlayer } from './player.js';
-import { initReader, showSurah, currentSurah } from './reader.js';
+import { initReader, showSurah, currentSurah, readerMic, leaveReader, updateFab } from './reader.js';
 import { renderReview } from './review.js';
 import { initSetoran, openSetoran } from './setoran.js';
 
@@ -15,7 +15,11 @@ const fmt = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 2 });
 // ---------- Router ----------
 function route() {
   const [name = 'beranda', a, b] = location.hash.replace(/^#\/?/, '').split('/');
+  const prev = view;
   view = VIEWS.includes(name) ? name : 'beranda';
+  if (prev === 'belajar' && view !== 'belajar') leaveReader();
+  closeSheet();
+  document.body.classList.toggle('reading', view === 'belajar');
   VIEWS.forEach(v => $(`#view-${v}`).classList.toggle('hidden', v !== view));
   $$('.nav a').forEach(l => {
     const active = l.dataset.view === view;
@@ -30,6 +34,7 @@ function route() {
     window.scrollTo({ top: 0 });
   }
   renderView();
+  updateFab();
 }
 
 function renderView() {
@@ -177,6 +182,7 @@ function bindUi() {
   $('#setTheme').onchange = e => { saveSettings({ theme: e.target.value }); applyAppearance(); };
 
   $('#openSetoran').onclick = async () => {
+    if (view === 'belajar' && readerMic()) return;
     let surah = currentSurah();
     let ayah = state.progress.last.ayah;
     if (!surah || surah.number !== state.progress.last.surah) {
@@ -214,7 +220,15 @@ function bindUi() {
   });
   addEventListener('hashchange', route);
   // Pergantian hari saat aplikasi terbuka (mis. lewat tengah malam): segarkan angka.
-  document.addEventListener('visibilitychange', () => { if (!document.hidden) { updateBadge(); renderView(); } });
+  // Mikrofon tidak dibiarkan menyala saat aplikasi di latar belakang.
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) leaveReader();
+    else { updateBadge(); renderView(); }
+  });
+  const stickyTop = () => document.documentElement.style.setProperty('--sticky-top',
+    matchMedia('(min-width: 760px)').matches ? `${$('.nav').offsetHeight}px` : '0px');
+  addEventListener('resize', stickyTop);
+  stickyTop();
 }
 
 async function loadSurahList() {
@@ -233,6 +247,7 @@ async function loadSurahList() {
 
 async function init() {
   applyAppearance();
+  initSheet();
   initSetoran();
   initReader();
   bindUi();

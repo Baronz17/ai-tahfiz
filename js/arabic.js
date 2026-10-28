@@ -61,31 +61,38 @@ export function tokenize(text) {
 
 // Penjajaran (alignment) kata target vs kata yang terdengar dengan pemrograman dinamis:
 // memaksimalkan jumlah kemiripan pasangan kata yang cocok, urutan tetap dijaga.
-export function compareRecitation(targetText, spokenText) {
-  const target = tokenize(targetText);
-  const spoken = normalizeArabic(spokenText).split(' ').filter(Boolean);
-  const n = target.length, m = spoken.length;
+// Mengembalikan pasangan [indeksTarget, indeksUcapan] yang cocok, urut menaik.
+export function alignWords(targetNorms, spoken) {
+  const n = targetNorms.length, m = spoken.length;
   const dp = Array.from({ length: n + 1 }, () => new Float64Array(m + 1));
-  const sims = Array.from({ length: n }, (_, i) => spoken.map(w => wordSimilarity(target[i].norm, w)));
+  const sims = targetNorms.map(t => spoken.map(w => wordSimilarity(t, w)));
   for (let i = 1; i <= n; i++) {
     for (let j = 1; j <= m; j++) {
       const s = sims[i - 1][j - 1];
       dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1], s >= MATCH_THRESHOLD ? dp[i - 1][j - 1] + s : -Infinity);
     }
   }
-  const words = target.map(t => ({ word: t.display, matched: false, heard: null }));
-  let i = n, j = m, used = 0;
+  const pairs = [];
+  let i = n, j = m;
+  // Saat skor seri, lewati kata target lebih dulu: kata ucapan dipasangkan ke kemunculan paling awal
+  // (mis. "الله" ke ayat yang sedang dibaca, bukan ke "الله" berikutnya).
   while (i > 0 && j > 0) {
     const s = sims[i - 1][j - 1];
-    if (s >= MATCH_THRESHOLD && dp[i][j] === dp[i - 1][j - 1] + s) {
-      words[i - 1].matched = true;
-      words[i - 1].heard = spoken[j - 1];
-      used++; i--; j--;
-    } else if (dp[i - 1][j] >= dp[i][j - 1]) i--;
+    if (dp[i - 1][j] === dp[i][j]) i--;
+    else if (s >= MATCH_THRESHOLD && dp[i][j] === dp[i - 1][j - 1] + s) { pairs.push([i - 1, j - 1]); i--; j--; }
     else j--;
   }
-  const matched = words.filter(w => w.matched).length;
-  return { words, matched, total: n, extra: m - used, score: n ? matched / n : 0 };
+  return pairs.reverse();
+}
+
+export function compareRecitation(targetText, spokenText) {
+  const target = tokenize(targetText);
+  const spoken = normalizeArabic(spokenText).split(' ').filter(Boolean);
+  const words = target.map(t => ({ word: t.display, matched: false, heard: null }));
+  const pairs = alignWords(target.map(t => t.norm), spoken);
+  for (const [ti, sj] of pairs) { words[ti].matched = true; words[ti].heard = spoken[sj]; }
+  const n = target.length;
+  return { words, matched: pairs.length, total: n, extra: spoken.length - pairs.length, score: n ? pairs.length / n : 0 };
 }
 
 const BISMILLAH = normalizeArabic('بسم الله الرحمن الرحيم');
