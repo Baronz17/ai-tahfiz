@@ -163,6 +163,8 @@ function renderSettings() {
   $('#setReciter').value = state.settings.reciter;
   $('#setFont').value = state.settings.fontSize;
   $('#setTheme').value = state.settings.theme;
+  $('#setSensitivity').value = state.settings.sensitivity;
+  $('#setShowHeard').checked = state.settings.showHeard;
 }
 
 // ---------- Inisialisasi ----------
@@ -180,6 +182,8 @@ function bindUi() {
   $('#setReciter').onchange = e => saveSettings({ reciter: e.target.value });
   $('#setFont').oninput = e => { saveSettings({ fontSize: Number(e.target.value) }); applyAppearance(); };
   $('#setTheme').onchange = e => { saveSettings({ theme: e.target.value }); applyAppearance(); };
+  $('#setSensitivity').onchange = e => saveSettings({ sensitivity: e.target.value });
+  $('#setShowHeard').onchange = e => saveSettings({ showHeard: e.target.checked });
 
   $('#openSetoran').onclick = async () => {
     if (view === 'belajar' && readerMic()) return;

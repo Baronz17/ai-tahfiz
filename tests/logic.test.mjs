@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { localDate, addDays, diffDays } from '../js/dates.js';
-import { normalizeArabic, compareRecitation, splitBismillah, firstLetterHint, tokenize } from '../js/arabic.js';
+import { normalizeArabic, compareRecitation, splitBismillah, firstLetterHint, tokenize, wordSimilarity, alignWords, PROFILES } from '../js/arabic.js';
 import { review, nextInterval, GRADES } from '../js/srs.js';
 import { emptyProgress, gradeAyah, stats, streak, migrateV1, parseImport } from '../js/progress.js';
 
@@ -109,4 +109,30 @@ test('progress: import accepts v2 and v1 exports, rejects junk', () => {
   assert.equal(back.items['999:1'], undefined);
   assert.ok(parseImport({ progress: { known: { '1:1': { at: 1 } }, review: {} } }).items['1:1']);
   assert.throws(() => parseImport({ hello: 1 }));
+});
+
+test('arabic: confusable letters are tolerated only in phonetic mode', () => {
+  // ص/س, ذ/ز, ط/ت: sering tertukar oleh pengenal suara
+  assert.ok(wordSimilarity('الصراط', 'السراط') >= PROFILES.normal.threshold);
+  assert.ok(wordSimilarity('ذلك', 'زلك') >= PROFILES.normal.threshold);
+  assert.ok(wordSimilarity('ذلك', 'زلك', false) < PROFILES.ketat.threshold);
+  assert.ok(wordSimilarity('ذلك', 'زلك') > wordSimilarity('ذلك', 'زلك', false));
+  // kata yang benar-benar berbeda tetap tidak cocok
+  assert.ok(wordSimilarity('لم', 'من') < PROFILES.longgar.threshold);
+});
+
+test('arabic: joined and split words align to both target words', () => {
+  const joined = alignWords(['يا', 'ايها', 'الناس'], ['ياايها', 'الناس']);
+  assert.deepEqual(joined.map(([t]) => t), [0, 1, 2]);
+  const split = alignWords(['فسيكفيكهم'], ['فسيكفي', 'كهم']);
+  assert.deepEqual(split, [[0, 0, 1]]);
+  // gabungan yang lemah tidak boleh "mencuri" kata yang tidak dibaca
+  const weak = alignWords(['قل', 'هو'], ['قل'], PROFILES.longgar);
+  assert.deepEqual(weak.map(([t]) => t), [0]);
+});
+
+test('arabic: compareRecitation counts split words once and reports extras', () => {
+  const r = compareRecitation('يَٰٓأَيُّهَا ٱلنَّاسُ', 'يا ايها الناس كلام');
+  assert.equal(r.matched, 2);
+  assert.equal(r.extra, 1);
 });

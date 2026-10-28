@@ -7,6 +7,7 @@ const PROGRESS_KEY = 'aitahfiz-progress-v2', LEGACY_KEY = 'aitahfiz-progress-v1'
 export const DEFAULT_SETTINGS = {
   dailyTarget: 5, reciter: 'ar.alafasy', fontSize: 30, theme: 'auto',
   showTranslation: true, hideMode: 'show', repeatEach: 3, loopRange: false, view: 'mushaf',
+  sensitivity: 'normal', showHeard: true,
 };
 
 function read(key) {

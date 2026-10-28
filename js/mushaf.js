@@ -1,11 +1,12 @@
 // Tampilan mushaf: teks mengalir per halaman dengan penanda ayat, mode sembunyikan ayat untuk hafalan,
 // dan "ikuti bacaan": saat mikrofon aktif, kata yang dibaca dengan benar muncul otomatis.
 import { $, $$, h, toast, openSheet, closeSheet } from './dom.js';
-import { normalizeArabic } from './arabic.js';
+import { normalizeArabic, PROFILES } from './arabic.js';
 import { Follower } from './follow.js';
 import { state, gradeAyah, surahLabel } from './state.js';
 import { ayahKey } from './progress.js';
 import { GRADES } from './srs.js';
+import { player } from './player.js';
 
 const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 const BISMILLAH = 'بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ';
@@ -13,13 +14,14 @@ const DIGITS = '٠١٢٣٤٥٦٧٨٩';
 export const arabicDigits = n => String(n).replace(/\d/g, d => DIGITS[d]);
 
 let surah = null, follower = null, wordEls = [], hideOn = false, following = false, rec = null;
-let pageObserver = null;
+let pageObserver = null, heardFinal = '';
 const handlers = {};
+const currentProfile = () => PROFILES[state.settings.sensitivity] || PROFILES.normal;
 
 const box = () => $('#mushaf');
 export const isFollowing = () => following;
 export const isHidden = () => hideOn;
-export const mistakeCount = () => (follower ? follower.mistakes.size : 0);
+export const mistakeCount = () => (follower ? follower.mistakes.size + follower.pending.size : 0);
 export const canPeek = () => !!follower && hideOn && follower.cursor < wordEls.length;
 
 // onMarker(ayah): ketuk nomor ayat. onChange(): status sesi berubah (badge, tombol). onFollow(aktif): mikrofon nyala/mati.
@@ -76,7 +78,7 @@ export function renderMushaf(s, { hide }) {
         h('span', { text: pg.hizb ? `Hizb ${pg.hizb}` : '' }))));
   }
   box().replaceChildren(...parts);
-  follower = new Follower(words);
+  follower = new Follower(words, currentProfile());
   hideOn = !!hide;
   box().classList.toggle('hide-on', hideOn);
   updateMarkers();
@@ -89,6 +91,7 @@ function cls(i) {
   const f = follower;
   let c = 'w';
   if (f.mistakes.has(i)) c += ' err';
+  else if (f.pending.has(i)) c += ' ragu';
   else if (f.peeked.has(i)) c += ' peek';
   else if (f.done.has(i)) c += ' done';
   else if (f.preview.has(i)) c += ' pv';
@@ -156,7 +159,10 @@ function startFollow() {
   if (!follower) return;
   if (!Recognition) { toast('Browser ini belum mendukung pengenalan suara. Coba Chrome di Android atau desktop.', 4500); return; }
   if (follower.cursor >= wordEls.length) { toast('Sudah di akhir surah. Ketuk nomor ayat untuk mulai lagi.', 4000); return; }
+  player.stop(); // audio qari jangan sampai ikut tertangkap mikrofon
   following = true;
+  heardFinal = '';
+  showHeard('', '');
   listen();
   paint([follower.cursor]);
   scrollToCursor();
@@ -169,11 +175,14 @@ function listen() {
   rec.lang = 'ar-SA';
   rec.interimResults = true;
   rec.continuous = true;
+  rec.maxAlternatives = 5; // beberapa tebakan; dipilih yang paling cocok dengan ayat
   rec.onresult = e => {
+    follower.profile = currentProfile();
     for (let i = e.resultIndex; i < e.results.length; i++) {
       const r = e.results[i];
-      const { dirty, jumped } = follower.hear(r[0].transcript, r.isFinal);
+      const { dirty, jumped, heard } = follower.hear(Array.from(r, alt => alt.transcript), r.isFinal);
       paint(dirty);
+      if (r.isFinal) { heardFinal = heard; showHeard(heard, ''); } else showHeard(heardFinal, heard);
       if (jumped) toast(`Melompat ke ayat ${follower.words[follower.cursor - 1]?.ayah ?? ''}`);
     }
     scrollToCursor();
@@ -194,15 +203,24 @@ export function stopFollow(showSummary) {
   following = false;
   try { rec?.stop(); } catch { /* sudah berhenti */ }
   rec = null;
-  const pv = [...follower.preview, follower.cursor];
+  const pv = [...follower.preview, follower.cursor, ...follower.settle()];
   follower.preview = new Set();
   paint(pv);
+  $('#heard').classList.add('hidden');
   handlers.onFollow?.(false);
   handlers.onChange?.();
   if (showSummary && (follower.done.size || follower.mistakes.size)) {
     const s = follower.summary();
     toast(`${s.read.length} ayat dibaca · ${s.mistakeCount} kesalahan. Ketuk "Kesalahan" untuk detail.`, 4000);
   }
+}
+
+// Teks mentah yang didengar browser, agar terlihat apakah salah dengar atau salah cocok.
+function showHeard(final, interim) {
+  const box = $('#heard');
+  box.classList.toggle('hidden', !following || !state.settings.showHeard);
+  $('#heardText').replaceChildren(final || '', interim ? h('span', { class: 'interim', text: (final ? ' ' : '') + interim }) : '');
+  if (!final && !interim) $('#heardText').textContent = '…';
 }
 
 // ---------- Ringkasan kesalahan ----------
@@ -228,8 +246,14 @@ export function openMistakes(focusAyah) {
       h('span', { class: 'pill', text: `Ayat ${p.ayah}` }),
       h('span', { class: 'chips', lang: 'ar', dir: 'rtl' },
         p.err.map(i => h('b', { class: 'err', text: word(i) })),
-        p.peek.map(i => h('b', { class: 'peek', text: word(i) })))))));
-      body.push(h('p', { class: 'muted tiny', text: 'Merah = terlewat/berbeda menurut transkripsi, kuning = dibuka manual. Transkripsi browser bisa keliru; periksa dengan mushaf.' }));
+        p.peek.map(i => h('b', { class: 'peek', text: word(i) }))),
+      p.heard.length ? h('small', { class: 'heard-as', lang: 'ar', dir: 'rtl', text: `terdengar: ${p.heard.join(' · ')}` }) : null))));
+      body.push(h('p', { class: 'muted tiny', text: 'Merah = terlewat/berbeda menurut transkripsi, kuning = dibuka manual. "Terdengar" = teks yang ditangkap browser di posisi itu. Bila Anda yakin bacaan sudah benar, coba kepekaan "Longgar" di Pengaturan.' }));
+    }
+    if (follower.log.length) {
+      body.push(h('details', { class: 'heard-log' },
+        h('summary', { text: `Riwayat teks terdengar (${follower.log.length})` }),
+        h('ol', { lang: 'ar', dir: 'rtl' }, follower.log.slice().reverse().map(t => h('li', { text: t })))));
     }
     const actions = h('div', { class: 'sheet-actions' });
     if (s.clean.length && hideOn) {

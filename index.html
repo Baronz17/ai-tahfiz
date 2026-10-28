@@ -175,6 +175,15 @@
         </label>
         <label>Ukuran huruf Arab <input type="range" id="setFont" min="22" max="48" step="2"></label>
         <p class="arabic preview" lang="ar" dir="rtl">ٱلْحَمْدُ لِلَّهِ رَبِّ ٱلْعَٰلَمِينَ</p>
+        <label>Kepekaan pencocokan suara
+          <select id="setSensitivity">
+            <option value="ketat">Ketat — huruf harus sama persis</option>
+            <option value="normal">Normal — toleran huruf yang bunyinya mirip</option>
+            <option value="longgar">Longgar — paling sedikit tanda merah palsu</option>
+          </select>
+        </label>
+        <p class="muted small" style="margin:-6px 0 0">Bila kata yang Anda baca dengan benar sering ditandai merah, pilih Longgar. Semakin longgar, semakin mungkin kata yang salah dianggap benar.</p>
+        <label class="check"><input type="checkbox" id="setShowHeard"> Tampilkan teks yang terdengar saat membaca</label>
         <label>Tema
           <select id="setTheme"><option value="auto">Ikuti sistem</option><option value="light">Terang</option><option value="dark">Gelap</option></select>
         </label>
@@ -193,7 +202,7 @@
         <li>Pengenalan suara bergantung pada dukungan browser (umumnya Chrome/Edge).</li>
         <li>Persentase memakai 6.236 ayat sebagai angka acuan umum; sistem penomoran dapat berbeda.</li>
       </ul>
-      <p class="muted small">Versi 2.1</p>
+      <p class="muted small">Versi 2.2</p>
     </article>
   </section>
 </main>
@@ -203,6 +212,8 @@
   <button id="playerPause" class="icon-btn" aria-label="Jeda">⏸</button>
   <button id="playerStop" class="icon-btn" aria-label="Hentikan">⏹</button>
 </div>
+
+<div id="heard" class="heard hidden" aria-live="off"><span class="heard-label">Terdengar</span><span id="heardText" lang="ar" dir="rtl"></span></div>
 
 <div id="readerBar" class="reader-bar" role="toolbar" aria-label="Alat hafalan">
   <button id="rbMistakes" type="button" class="rb-pill" aria-label="Kesalahan">
