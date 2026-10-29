@@ -4,6 +4,7 @@
   --ok: #17803d; --ok-soft: #e3f4e8; --warn: #a15c07; --warn-soft: #fff1d6; --bad: #b42318; --bad-soft: #fde8e6;
   --heat-0: #e7ece6; --heat-1: #b9dcc3; --heat-2: #74b98b; --heat-3: #2f8a54; --heat-4: #0f5132;
   --shadow: 0 2px 10px #17331c0d; --ar-size: 30px; --radius: 16px; --page: #fffdf6; --sticky-top: 0px;
+  --font-ui: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
@@ -25,7 +26,10 @@
 
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
-body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; padding-bottom: calc(76px + env(safe-area-inset-bottom)); }
+:root[data-font="nunito"] { --font-ui: "Nunito", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+:root[data-font="lora"] { --font-ui: "Lora", Georgia, "Times New Roman", serif; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.55 var(--font-ui); padding-bottom: calc(76px + env(safe-area-inset-bottom)); -webkit-font-smoothing: antialiased; }
+h1, h2, h3 { letter-spacing: -.015em; }
 a { color: var(--primary); }
 h1, h2, h3 { margin: 0; line-height: 1.25; }
 h2 { font-size: 1.2rem; }
@@ -42,8 +46,11 @@ code { font-size: .85em; background: var(--surface-2); padding: 1px 5px; border-
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .topbar { background: #0f2a1c; } }
 .brand { display: flex; align-items: center; gap: 10px; }
 .brand img { border-radius: 10px; }
-.brand h1 { font-size: 1.15rem; }
-.brand p { margin: 0; font-size: .8rem; opacity: .8; }
+.brand h1 { font-size: 1.2rem; font-weight: 800; letter-spacing: -.02em; }
+.brand { min-width: 0; }
+.brand > div { min-width: 0; }
+.brand p { margin: 0; font-size: .8rem; opacity: .8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 420px) { .brand p { display: none; } }
 .topbar .pill { background: #ffffff22; color: #fff; }
 .topbar .pill.off { background: var(--warn); color: #fff; }
 
@@ -71,7 +78,7 @@ main { max-width: 1000px; margin: 0 auto; padding: 16px 16px 72px; }
 .card + .card { margin-top: 0; }
 .view > .card { margin-bottom: 12px; }
 .eyebrow { margin: 0 0 4px; font-size: .78rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 650; }
-.stat { font-size: 1.9rem; font-weight: 750; color: var(--primary); line-height: 1.2; margin-bottom: 6px; font-variant-numeric: tabular-nums; }
+.stat { font-size: 1.9rem; font-weight: 800; letter-spacing: -.02em; color: var(--primary); line-height: 1.2; margin-bottom: 6px; font-variant-numeric: tabular-nums; }
 .stat small { font-size: .85rem; font-weight: 500; color: var(--muted); }
 .hero { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; background: linear-gradient(135deg, var(--surface), var(--accent-soft)); }
 .hero h3 { font-size: 1.25rem; margin: 0 0 4px; }
@@ -222,14 +229,15 @@ body.playing .fab { bottom: calc(136px + env(safe-area-inset-bottom)); }
 .ay.playing { background: color-mix(in srgb, var(--accent) 24%, transparent); }
 .ay.focus { animation: flash 1.8s ease-out 1; }
 @keyframes flash { 0%, 45% { background: color-mix(in srgb, var(--primary) 20%, transparent); } 100% { background: transparent; } }
-.mk { display: inline-grid; place-items: center; min-width: 1.75em; height: 1.75em; min-height: 0; padding: 0 .2em; margin: 0 .06em; border-radius: 50%; border: 2px double var(--accent); background: transparent; color: var(--ink); font: 700 .5em/1 "Amiri Quran", "Amiri", serif; vertical-align: .3em; cursor: pointer; }
+.mk { position: relative; display: inline-grid; place-items: center; min-width: 1.75em; height: 1.75em; min-height: 0; padding: 0 .2em; margin: 0 .06em; border-radius: 50%; border: 2px double var(--accent); background: transparent; color: var(--ink); font: 700 .5em/1 "Amiri Quran", "Amiri", serif; vertical-align: .3em; cursor: pointer; }
 .mk.memorized { border-color: var(--ok); color: var(--ok); }
 .mk.learning { border-color: var(--bad); color: var(--bad); }
 .w { border-radius: 4px; transition: color .2s, background-color .2s; }
 .w.hid { color: transparent; border-bottom: 1.5px solid var(--line); user-select: none; -webkit-user-select: none; cursor: pointer; }
 .w.pv { color: var(--muted); }
 .mushaf:not(.hide-on) .w.done { color: var(--ok); }
-.w.err { color: var(--bad); background: var(--bad-soft); }
+/* Latar dibatasi ke tengah agar tidak menutupi baris lain (huruf Arab punya kotak glyph yang tinggi). */
+.w.err { color: var(--bad); background: linear-gradient(var(--bad-soft), var(--bad-soft)) center / 100% 58% no-repeat; }
 .w.peek { color: var(--warn); }
 .w.ragu { color: var(--bad); opacity: .7; text-decoration: underline dotted var(--bad); text-underline-offset: .35em; }
 .w.cur { box-shadow: inset 0 -3px 0 var(--accent); }
@@ -289,6 +297,36 @@ body.reading main { padding-bottom: 180px; }
 #heardText .interim { color: var(--muted); }
 @media (min-width: 760px) { .heard { bottom: 84px; } }
 .mistake { flex-wrap: wrap; }
-.heard-as { flex-basis: 100%; text-align: right; color: var(--muted); font-family: "Amiri", serif; font-size: .95rem; }
+.heard-as { flex-basis: 100%; text-align: right; color: var(--muted); font-size: .85rem; }
 .heard-log summary { cursor: pointer; color: var(--primary); font-weight: 600; font-size: .9rem; }
 .heard-log ol { margin: 6px 0 0; font-family: "Amiri", serif; font-size: 1.05rem; }
+
+/* Penanda */
+.mk.bm::after { content: ""; position: absolute; top: -.45em; right: -.25em; width: .5em; height: .7em; background: var(--accent); clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 72%, 0 100%); }
+.top-actions { display: flex; align-items: center; gap: 6px; }
+.top-btn { min-height: 38px; width: 38px; padding: 0; border-radius: 12px; background: #ffffff1f; color: #fff; }
+.top-btn svg, .mi-bookmark svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.mushaf-info { flex-direction: row; align-items: center; justify-content: space-between; gap: 10px; }
+.mushaf-info > div { display: flex; flex-direction: column; min-width: 0; }
+.mi-bookmark { flex: none; min-height: 40px; width: 40px; padding: 0; background: var(--surface-2); color: var(--primary); }
+.card-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+.card-head .eyebrow { margin: 0; }
+.list { display: grid; gap: 6px; }
+.list-row { display: flex; align-items: center; gap: 6px; }
+.list-main { flex: 1; min-width: 0; justify-content: space-between; flex-wrap: wrap; gap: 2px 10px; text-align: left; background: var(--surface-2); color: var(--ink); font-weight: 500; }
+.list-main strong { font-weight: 650; }
+.list-row .icon-btn { flex: none; font-size: 1rem; }
+
+/* Pencarian */
+.modal.sheet-top { align-items: flex-start; padding-top: max(12px, env(safe-area-inset-top)); }
+#searchInput { width: 100%; min-height: 48px; padding: 10px 14px; font: inherit; font-size: 1.05rem; color: var(--ink); background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px; }
+.results { display: grid; gap: 6px; max-height: 62dvh; overflow: auto; }
+.results .eyebrow { margin: 8px 0 0; }
+.result { display: grid; grid-template-columns: minmax(0, 1fr); justify-content: stretch; gap: 2px; justify-items: start; text-align: left; background: var(--surface-2); color: var(--ink); font-weight: 500; padding: 10px 12px; }
+.result strong { font-weight: 650; }
+.result-ar { justify-self: stretch; font-family: "Amiri Quran", "Amiri", serif; font-size: 1.3rem; line-height: 2; text-align: right; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.result-tr { font-size: .9rem; color: var(--muted); }
+.result-tr mark { background: var(--accent-soft); color: var(--ink); border-radius: 4px; padding: 0 2px; }
+.search-help ul { margin: 4px 0 0; padding-left: 18px; }
+.search-note { margin-top: 8px; }
+.heard-as bdi { font-family: "Amiri", serif; font-size: 1.05rem; }

@@ -3,6 +3,10 @@
 
 const MARKS = /[ؐ-ًؚ-ٰٟۖ-ۭـ]/g;
 
+// Buang harakat & tanda Al-Qur'an saja (huruf tetap). Untuk teks di elemen yang memakai font sistem
+// (mis. <select>), yang sering tidak punya glyph tanda khusus seperti U+06E1.
+export const stripMarks = text => String(text || '').replace(MARKS, '');
+
 export function normalizeArabic(text) {
   return String(text || '')
     .normalize('NFC')

@@ -5,7 +5,26 @@ import { newRecord, review, GRADES } from './srs.js';
 export const TOTAL_AYAH = 6236;
 
 export function emptyProgress() {
-  return { version: 2, items: {}, activity: {}, last: { surah: 1, ayah: 1 } };
+  return { version: 2, items: {}, activity: {}, last: { surah: 1, ayah: 1 }, bookmarks: {} };
+}
+
+const validRef = (s, a) => s >= 1 && s <= 114 && a >= 1 && a <= 286;
+
+// Penanda: { "s:a": { at } }. Mengembalikan true bila sekarang tertanda.
+export function toggleBookmark(p, s, a, now = Date.now()) {
+  p.bookmarks ||= {};
+  const key = ayahKey(s, a);
+  if (p.bookmarks[key]) { delete p.bookmarks[key]; return false; }
+  p.bookmarks[key] = { at: now };
+  return true;
+}
+
+// Daftar penanda, terbaru lebih dulu.
+export function listBookmarks(p) {
+  return Object.entries(p.bookmarks || {})
+    .map(([k, v]) => { const [surah, ayah] = parseKey(k); return { surah, ayah, at: Number(v?.at) || 0 }; })
+    .filter(b => validRef(b.surah, b.ayah))
+    .sort((x, y) => y.at - x.at);
 }
 
 export const ayahKey = (s, a) => `${s}:${a}`;
@@ -120,6 +139,11 @@ export function parseImport(json, today = localDate()) {
     }
     const s = Number(data.last?.surah), a = Number(data.last?.ayah);
     if (s >= 1 && s <= 114) p.last = { surah: s, ayah: a >= 1 ? a : 1 };
+    for (const [k, v] of Object.entries(data.bookmarks || {})) {
+      if (!/^\d+:\d+$/.test(k)) continue;
+      const [bs, ba] = parseKey(k);
+      if (validRef(bs, ba)) p.bookmarks[k] = { at: Number(v?.at) || Date.now() };
+    }
     return p;
   }
   if (data && (data.known || data.review)) return migrateV1(data, today);

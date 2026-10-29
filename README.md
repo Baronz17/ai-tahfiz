@@ -14,6 +14,13 @@ PWA (tanpa build tool, tanpa dependensi) untuk menghafal Al-Qur'an dengan siklus
   ditandai *ragu* dulu dan bisa "diselamatkan" bila dibaca ulang. Kepekaan *Ketat/Normal/Longgar* di Pengaturan.
   Bilah **Terdengar** menampilkan teks mentah dari browser, dan daftar Kesalahan menunjukkan apa yang terdengar di
   posisi kata yang salah — untuk membedakan "browser salah dengar" dari "aplikasi salah cocok".
+- **Penanda** — tandai ayat dari menu nomor ayat, tombol 🔖 di bilah info mushaf, atau tombol di daftar ayat;
+  pita kecil tampil di nomor ayat. "Terakhir dibaca" tersimpan otomatis. Daftar penanda ada di Beranda dan tombol 🔖
+  di atas. Ikut diekspor/impor.
+- **Pencarian** (ikon 🔍 di atas, atau tekan `/`) — referensi (`2:255`, `yasin 71`), nama surah dengan ejaan Indonesia
+  maupun Inggris (Yasin/Yaa-Seen, Thaha/Taa-Haa, At-Taubah/At-Tawba), teks Arab tanpa harakat, dan kata dalam
+  terjemahan. Pencarian teks berjalan offline atas surah yang tersimpan (unduh semua surah di halaman Progres).
+- **Huruf Latin** Plus Jakarta Sans (default), Nunito, atau Lora — pilih di Pengaturan.
 - **Daftar ayat** — teks Utsmani + terjemahan Indonesia (AlQuran Cloud API), basmalah dipisah dari ayat 1.
   Mode tampilan: *Tampil*, *Huruf awal* (petunjuk), *Sembunyi* (ketuk untuk membuka).
 - **Putar berulang (talaqqi)** — rentang ayat, ulang tiap ayat N×, opsi ulangi rentang, pilihan qari, ayat yang diputar disorot.
@@ -47,6 +54,8 @@ streak, migrasi, dan impor.
 |---|---|
 | `js/arabic.js` | normalisasi, pencocokan bacaan, pemisahan basmalah, petunjuk huruf awal |
 | `js/srs.js`, `js/progress.js` | penjadwalan murajaah dan model progres (murni, teruji) |
+| `js/search.js` | inti pencarian: referensi, nama surah (ejaan longgar), teks Arab/terjemahan (murni, teruji) |
+| `js/finder.js` | lembar pencarian & penanda, navigasi ke ayat |
 | `js/follow.js` | mesin "ikuti bacaan": posisi pembaca, kata terlewat, lompatan (murni, teruji) |
 | `js/mushaf.js` | tampilan mushaf, sembunyikan ayat, mikrofon, ringkasan kesalahan |
 | `js/api.js`, `js/db.js` | klien API + cache IndexedDB |

@@ -121,6 +121,7 @@ export function updateMarkers() {
     const r = state.progress.items[ayahKey(surah.number, Number(mk.dataset.ayah))];
     mk.classList.toggle('memorized', r?.status === 'memorized');
     mk.classList.toggle('learning', !!r && r.status !== 'memorized');
+    mk.classList.toggle('bm', !!state.progress.bookmarks?.[ayahKey(surah.number, Number(mk.dataset.ayah))]);
   }
 }
 
@@ -248,7 +249,7 @@ export function openMistakes(focusAyah) {
       h('span', { class: 'chips', lang: 'ar', dir: 'rtl' },
         p.err.map(i => h('b', { class: 'err', text: word(i) })),
         p.peek.map(i => h('b', { class: 'peek', text: word(i) }))),
-      p.heard.length ? h('small', { class: 'heard-as', lang: 'ar', dir: 'rtl', text: `terdengar: ${p.heard.join(' · ')}` }) : null))));
+      p.heard.length ? h('small', { class: 'heard-as' }, 'terdengar: ', h('bdi', { lang: 'ar', dir: 'rtl', text: p.heard.join(' · ') })) : null))));
       body.push(h('p', { class: 'muted tiny', text: 'Merah = terlewat/berbeda menurut transkripsi, kuning = dibuka manual. "Terdengar" = teks yang ditangkap browser di posisi itu. Bila Anda yakin bacaan sudah benar, coba kepekaan "Longgar" di Pengaturan.' }));
     }
     if (follower.log.length) {

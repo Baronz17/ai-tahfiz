@@ -10,12 +10,16 @@
 <link rel="apple-touch-icon" href="./icon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri+Quran&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri+Quran&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
 <link rel="stylesheet" href="./styles.css">
 <title>AI Tahfiz</title>
 <script>
-  // Terapkan tema sebelum render pertama agar tidak berkedip.
-  try { const t = JSON.parse(localStorage.getItem('aitahfiz-settings-v1'))?.theme; if (t && t !== 'auto') document.documentElement.dataset.theme = t; } catch {}
+  // Terapkan tema & huruf sebelum render pertama agar tidak berkedip.
+  try {
+    const st = JSON.parse(localStorage.getItem('aitahfiz-settings-v1')) || {};
+    if (st.theme && st.theme !== 'auto') document.documentElement.dataset.theme = st.theme;
+    if (st.uiFont && st.uiFont !== 'jakarta') document.documentElement.dataset.font = st.uiFont;
+  } catch {}
 </script>
 </head>
 <body>
@@ -24,7 +28,15 @@
     <img src="./icon.svg" alt="" width="36" height="36">
     <div><h1>AI Tahfiz</h1><p>Hafalkan · Setorkan · Murajaah</p></div>
   </div>
-  <span id="netBadge" class="pill" aria-live="polite">Online</span>
+  <div class="top-actions">
+    <span id="netBadge" class="pill" aria-live="polite">Online</span>
+    <button id="openBookmarks" class="top-btn" type="button" aria-label="Penanda" title="Penanda">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18l-6-4-6 4z"/></svg>
+    </button>
+    <button id="openSearch" class="top-btn" type="button" aria-label="Cari ayat" title="Cari (/)">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+    </button>
+  </div>
 </header>
 
 <nav class="nav" aria-label="Navigasi utama">
@@ -70,6 +82,10 @@
         <div class="bar"><span id="homeTotalBar"></span></div>
         <p class="muted small" id="homePercent">0% dari 6.236 ayat</p>
       </article>
+      <article class="card span-2">
+        <div class="card-head"><p class="eyebrow">Penanda</p><button id="homeAllBookmarks" type="button" class="ghost small-btn">Semua penanda</button></div>
+        <div id="homeBookmarks" class="list"></div>
+      </article>
     </div>
   </section>
 
@@ -109,7 +125,12 @@
       </details>
       <p id="sourceStatus" class="muted small" aria-live="polite"></p>
     </div>
-    <div id="mushafInfo" class="mushaf-info hidden" aria-live="polite"><strong id="miSurah"></strong><span id="miPage"></span></div>
+    <div id="mushafInfo" class="mushaf-info hidden">
+      <div aria-live="polite"><strong id="miSurah"></strong><span id="miPage"></span></div>
+      <button id="miBookmark" type="button" class="mi-bookmark" aria-label="Penanda untuk posisi ini">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18l-6-4-6 4z"/></svg>
+      </button>
+    </div>
     <div id="bismillah" class="bismillah hidden" lang="ar" dir="rtl">بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ</div>
     <div id="verses" class="verses"></div>
     <div id="mushaf" class="mushaf hidden"></div>
@@ -184,6 +205,13 @@
         </label>
         <p class="muted small" style="margin:-6px 0 0">Bila kata yang Anda baca dengan benar sering ditandai merah, pilih Longgar. Semakin longgar, semakin mungkin kata yang salah dianggap benar.</p>
         <label class="check"><input type="checkbox" id="setShowHeard"> Tampilkan teks yang terdengar saat membaca</label>
+        <label>Huruf Latin
+          <select id="setUiFont">
+            <option value="jakarta">Plus Jakarta Sans — modern</option>
+            <option value="nunito">Nunito — bulat &amp; ramah</option>
+            <option value="lora">Lora — klasik (serif)</option>
+          </select>
+        </label>
         <label>Tema
           <select id="setTheme"><option value="auto">Ikuti sistem</option><option value="light">Terang</option><option value="dark">Gelap</option></select>
         </label>
@@ -202,7 +230,7 @@
         <li>Pengenalan suara bergantung pada dukungan browser (umumnya Chrome/Edge).</li>
         <li>Persentase memakai 6.236 ayat sebagai angka acuan umum; sistem penomoran dapat berbeda.</li>
       </ul>
-      <p class="muted small">Versi 2.2.1</p>
+      <p class="muted small">Versi 2.3</p>
     </article>
   </section>
 </main>

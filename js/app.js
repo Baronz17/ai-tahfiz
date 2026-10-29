@@ -2,11 +2,20 @@ import { $, $$, h, toast, initSheet, closeSheet } from './dom.js';
 import { getSurahList, getSurah, cachedSurahNumbers, migrateLegacyCache } from './api.js';
 import { state, on, saveSettings, replaceProgress, surahLabel } from './state.js';
 import { stats, perSurah, parseImport, emptyProgress, TOTAL_AYAH } from './progress.js';
+import { stripMarks } from './arabic.js';
 import { localDate, addDays, diffDays } from './dates.js';
 import { player, onPlayer } from './player.js';
 import { initReader, showSurah, currentSurah, readerMic, leaveReader, updateFab } from './reader.js';
 import { renderReview } from './review.js';
 import { initSetoran, openSetoran } from './setoran.js';
+import { openSearch, openBookmarks, renderHomeBookmarks } from './finder.js';
+
+// Huruf Latin pilihan. Plus Jakarta Sans dimuat di index.html; lainnya dimuat saat dipilih.
+const UI_FONTS = {
+  jakarta: null,
+  nunito: 'https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap',
+  lora: 'https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600;700&display=swap',
+};
 
 const VIEWS = ['beranda', 'belajar', 'murajaah', 'progres', 'pengaturan'];
 let view = null;
@@ -62,6 +71,7 @@ function renderHome() {
   $('#homeTotal').textContent = s.memorized;
   $('#homeTotalBar').style.width = `${s.percent}%`;
   $('#homePercent').textContent = `${fmt.format(s.percent)}% dari ${fmt.format(TOTAL_AYAH)} ayat`;
+  renderHomeBookmarks();
 }
 
 function updateBadge() {
@@ -156,6 +166,11 @@ function applyAppearance() {
   document.documentElement.style.setProperty('--ar-size', `${state.settings.fontSize}px`);
   if (state.settings.theme === 'auto') delete document.documentElement.dataset.theme;
   else document.documentElement.dataset.theme = state.settings.theme;
+  const font = UI_FONTS[state.settings.uiFont] !== undefined ? state.settings.uiFont : 'jakarta';
+  if (font === 'jakarta') delete document.documentElement.dataset.font;
+  else document.documentElement.dataset.font = font;
+  const href = UI_FONTS[font];
+  if (href && !document.querySelector(`link[href="${href}"]`)) document.head.append(h('link', { rel: 'stylesheet', href }));
 }
 
 function renderSettings() {
@@ -164,6 +179,7 @@ function renderSettings() {
   $('#setFont').value = state.settings.fontSize;
   $('#setTheme').value = state.settings.theme;
   $('#setSensitivity').value = state.settings.sensitivity;
+  $('#setUiFont').value = state.settings.uiFont;
   $('#setShowHeard').checked = state.settings.showHeard;
 }
 
@@ -183,6 +199,15 @@ function bindUi() {
   $('#setFont').oninput = e => { saveSettings({ fontSize: Number(e.target.value) }); applyAppearance(); };
   $('#setTheme').onchange = e => { saveSettings({ theme: e.target.value }); applyAppearance(); };
   $('#setSensitivity').onchange = e => saveSettings({ sensitivity: e.target.value });
+  $('#setUiFont').onchange = e => { saveSettings({ uiFont: e.target.value }); applyAppearance(); };
+  $('#openSearch').onclick = () => openSearch();
+  $('#openBookmarks').onclick = () => openBookmarks();
+  $('#homeAllBookmarks').onclick = () => openBookmarks();
+  // Pintasan keyboard: "/" atau Ctrl/⌘+K membuka pencarian.
+  document.addEventListener('keydown', e => {
+    const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName);
+    if ((e.key === '/' && !typing) || (e.key.toLowerCase() === 'k' && (e.ctrlKey || e.metaKey))) { e.preventDefault(); openSearch(); }
+  });
   $('#setShowHeard').onchange = e => saveSettings({ showHeard: e.target.checked });
 
   $('#openSetoran').onclick = async () => {
@@ -244,7 +269,7 @@ async function loadSurahList() {
   }
   const select = $('#surahSelect');
   select.replaceChildren(...(state.surahList.length
-    ? state.surahList.map(s => h('option', { value: s.number, text: `${s.number}. ${s.englishName} · ${s.name}` }))
+    ? state.surahList.map(s => h('option', { value: s.number, text: `${s.number}. ${s.englishName} · ${stripMarks(s.name)}` }))
     : Array.from({ length: 114 }, (_, i) => h('option', { value: i + 1, text: `Surah ${i + 1}` }))));
   if (currentSurah()) select.value = String(currentSurah().number);
 }
