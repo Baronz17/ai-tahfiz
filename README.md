@@ -34,6 +34,8 @@ PWA (tanpa build tool, tanpa dependensi) untuk menghafal Al-Qur'an dengan siklus
 - Tema terang/gelap, ukuran huruf Arab dapat diatur.
 
 **Alamat aplikasi:** https://tahfiz.lifeos.web.id (GitHub Pages dengan domain sendiri; file `CNAME`).
+**Kebijakan privasi:** https://tahfiz.lifeos.web.id/privasi/ (`privasi/index.html`) — perbarui bila aplikasi mulai
+mengirim data ke layanan baru.
 
 ## Menjalankan
 Service worker butuh `localhost` atau HTTPS (jangan buka lewat `file://`).
