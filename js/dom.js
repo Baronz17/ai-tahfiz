@@ -32,7 +32,7 @@ export function openSheet({ title, subtitle = '', body = [] }) {
   $('#sheetSub').textContent = subtitle;
   $('#sheetBody').replaceChildren(...body.filter(Boolean));
   sheetReturnFocus = document.activeElement;
-  $('#sheet').classList.remove('hidden');
+  $('#sheet').classList.remove('hidden', 'sheet-top');
   $('#sheetClose').focus();
 }
 

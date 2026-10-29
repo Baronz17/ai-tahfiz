@@ -1,10 +1,13 @@
 // Mesin "ikuti bacaan": melacak posisi pembaca di dalam rangkaian kata surah berdasarkan transkripsi suara.
 // Murni (tanpa DOM) agar bisa diuji. Kata = { ayah, norm, display }.
-import { normalizeArabic, alignWords, wordSimilarity, PROFILES } from './arabic.js';
+import { normalizeArabic, alignWords, wordSimilarity, thresholdFor, PROFILES } from './arabic.js';
 
 const LOOKAHEAD = 4; // kata tambahan di jendela pencocokan; membatasi lompatan tak sengaja
 const BACK = 8;      // kata "ragu" sejauh ini di belakang kursor masih bisa diselamatkan bila dibaca ulang
 const LOG_MAX = 30;
+const MAX_SKIP = 2;  // kata yang boleh terlewat tanpa bukti tambahan
+const ANCHOR = 3;    // lompatan lebih jauh butuh sekian kecocokan kuat yang berdekatan
+const STRONG = 0.8;
 
 const toWords = text => normalizeArabic(text).split(' ').filter(Boolean);
 
@@ -18,6 +21,7 @@ export class Follower {
       if (r) r[1] = i; else this.ranges.set(w.ayah, [i, i]);
     });
     this.log = []; // teks final yang terdengar (terbaru di akhir), untuk diagnosis
+    this.sessionPrev = [];
     this.reset(0);
   }
 
@@ -41,6 +45,39 @@ export class Follower {
 
   firstWordOf(ayah) { return this.ranges.get(ayah)?.[0] ?? 0; }
 
+  // Dipanggil setiap sesi pengenalan suara baru dimulai.
+  newSession() { this.sessionPrev = []; }
+
+  // Sebagian browser (mis. Chrome Android) mengirim hasil kumulatif: hasil final berikutnya diawali
+  // seluruh teks final sebelumnya. Awalan yang sama persis itu dibuang agar tidak diproses dua kali.
+  strip(words) {
+    const prev = this.sessionPrev;
+    if (prev.length && words.length >= prev.length && prev.every((w, k) => words[k] === w)) return words.slice(prev.length);
+    return words;
+  }
+
+  pairSim([i, a, b], spoken) {
+    return wordSimilarity(this.words[i].norm, spoken.slice(a, b + 1).join(''), this.profile.phonetic);
+  }
+
+  // Terima pasangan maju secara berurutan. Melompati > MAX_SKIP kata hanya bila didukung ANCHOR kecocokan
+  // kuat yang berdekatan — satu kata yang kebetulan sama jauh di depan (mis. "احد") tidak cukup.
+  guard(fwd, spoken) {
+    const out = [];
+    let pos = this.cursor;
+    for (let k = 0; k < fwd.length; k++) {
+      const i = fwd[k][0];
+      if (i - pos > MAX_SKIP) {
+        let end = k + 1;
+        while (end < fwd.length && end - k < ANCHOR && fwd[end][0] - fwd[end - 1][0] <= 2) end++;
+        if (end - k < ANCHOR || !fwd.slice(k, end).every(p => this.pairSim(p, spoken) >= STRONG)) break;
+      }
+      out.push(fwd[k]);
+      pos = i + 1;
+    }
+    return out;
+  }
+
   // Pasangan [indeksKataAbsolut, ucapanAwal, ucapanAkhir] untuk jendela mulai `pos`.
   alignAt(pos, spoken, extra = 0) {
     const end = Math.min(this.words.length, pos + extra + spoken.length + LOOKAHEAD);
@@ -52,13 +89,14 @@ export class Follower {
     const need = Math.max(3, Math.ceil(spoken.length * 0.6));
     let best = -1, bestScore = 0, bestDist = Infinity;
     const { threshold, phonetic } = this.profile;
-    const near = (i, w) => i < this.words.length && wordSimilarity(this.words[i].norm, w, phonetic) >= threshold;
+    const near = (i, w) => i < this.words.length && wordSimilarity(this.words[i].norm, w, phonetic) >= thresholdFor(this.words[i].norm, w, threshold);
     for (let p = 0; p < this.words.length; p++) {
       // Saringan murah sebelum penjajaran penuh: kata ke-1 cocok dan kata ke-2 muncul tak jauh sesudahnya.
       if (!near(p, spoken[0])) continue;
       if (spoken.length > 1 && ![1, 2, 3].some(d => near(p + d, spoken[1]))) continue;
       const m = this.alignAt(p, spoken);
       if (m.length < need || m[0][0] !== p) continue;
+      if (m.every(([i]) => this.done.has(i))) continue; // hanya mengulang bagian yang sudah dibaca
       const dist = p >= this.cursor ? p - this.cursor : this.words.length + this.cursor - p; // utamakan ke depan
       if (m.length > bestScore || (m.length === bestScore && dist < bestDist)) { best = p; bestScore = m.length; bestDist = dist; }
     }
@@ -77,10 +115,11 @@ export class Follower {
     const from = this.windowStart();
     let best = null;
     for (const text of texts) {
-      const spoken = toWords(text);
+      const full = toWords(text);
+      const spoken = this.strip(full);
       if (!spoken.length) continue;
       const pairs = this.alignAt(from, spoken, this.cursor - from);
-      if (!best || pairs.length > best.pairs.length) best = { text, spoken, pairs, from };
+      if (!best || pairs.length > best.pairs.length) best = { text, full, spoken, pairs, from };
     }
     return best;
   }
@@ -97,8 +136,11 @@ export class Follower {
     let best = this.pick(texts);
     if (!best) return this.finish(res);
     res.heard = best.text;
-    if (isFinal) this.log = [...this.log, best.text].slice(-LOG_MAX);
-    const forward = () => best.pairs.filter(([i]) => i >= this.cursor);
+    if (isFinal) {
+      this.log = [...this.log, best.text].slice(-LOG_MAX);
+      this.sessionPrev = best.full;
+    }
+    const forward = () => this.guard(best.pairs.filter(([i]) => i >= this.cursor), best.spoken);
     if (isFinal && best.spoken.length >= 3 && forward().length < best.spoken.length * 0.3) {
       const p = this.resync(best.spoken);
       if (p >= 0 && p !== this.cursor) {
@@ -108,7 +150,7 @@ export class Follower {
       }
     }
     if (!isFinal) {
-      for (const [i] of best.pairs) if (i >= this.cursor || this.pending.has(i)) { this.preview.add(i); dirty.add(i); }
+      for (const [i] of [...best.pairs.filter(([i]) => this.pending.has(i)), ...forward()]) { this.preview.add(i); dirty.add(i); }
       return this.finish(res);
     }
     // Kata ragu yang kini terdengar: selamat.

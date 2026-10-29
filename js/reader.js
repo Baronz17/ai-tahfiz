@@ -9,6 +9,7 @@ import { localDate } from './dates.js';
 import { player, onPlayer } from './player.js';
 import { openSetoran } from './setoran.js';
 import * as mushaf from './mushaf.js';
+import { isBookmarked, toggleBookmarkUI, openBookmarks } from './finder.js';
 
 let surah = null, loadToken = 0, observer = null, lastSaveTimer = null;
 
@@ -17,7 +18,7 @@ export function currentSurah() { return surah; }
 const isMushaf = () => state.settings.view === 'mushaf';
 const ayahEl = n => (isMushaf() ? $(`#mushaf .ay[data-ayah="${n}"]`) : document.getElementById(`ayah-${n}`));
 
-const signature = rec => (rec ? `${rec.status}|${rec.due}` : '');
+const signature = (rec, bm) => (rec ? `${rec.status}|${rec.due}` : '') + (bm ? '|bm' : '');
 
 function statusPill(rec) {
   if (!rec) return null;
@@ -30,7 +31,8 @@ function verseEl(a) {
   const n = surah.number;
   const rec = state.progress.items[ayahKey(n, a.n)];
   const memorized = rec?.status === 'memorized';
-  const el = h('article', { class: 'verse', id: `ayah-${a.n}`, dataset: { ayah: a.n, sig: signature(rec) } },
+  const bm = isBookmarked(n, a.n);
+  const el = h('article', { class: 'verse', id: `ayah-${a.n}`, dataset: { ayah: a.n, sig: signature(rec, bm) } },
     h('div', { class: 'verse-head' },
       h('span', { class: 'num', 'aria-label': `Ayat ${a.n}`, text: a.n }),
       statusPill(rec),
@@ -40,6 +42,7 @@ function verseEl(a) {
         h('button', { class: 'ghost', onclick: () => { setLast(n, a.n); openSetoran(surah, a.n); } }, '🎙 Setor'),
         h('button', { class: memorized ? 'secondary' : '', onclick: () => mark(a.n, GRADES.LANCAR) }, memorized ? '✓ Lancar' : '✓ Hafal'),
         h('button', { class: 'ghost', onclick: () => mark(a.n, GRADES.LUPA) }, '↺ Ulang'),
+        h('button', { class: bm ? 'secondary' : 'ghost', 'aria-pressed': String(bm), 'aria-label': bm ? `Hapus penanda ayat ${a.n}` : `Tandai ayat ${a.n}`, title: 'Penanda', onclick: () => toggleBookmarkUI(n, a.n) }, '🔖'),
         rec ? h('button', { class: 'ghost', 'aria-label': `Hapus status ayat ${a.n}`, title: 'Hapus status', onclick: () => reset(a.n) }, '✕') : null,
       ),
     ),
@@ -261,6 +264,7 @@ function ayahMenu(n) {
         act('🎙 Setor & nilai ayat', () => openSetoran(surah, n)),
         act(rec?.status === 'memorized' ? '✓ Lancar' : '✓ Tandai hafal', () => mark(n, GRADES.LANCAR)),
         act('↺ Perlu diulang', () => mark(n, GRADES.LUPA)),
+        act(isBookmarked(surah.number, n) ? '🔖 Hapus penanda' : '🔖 Tandai (penanda)', () => toggleBookmarkUI(surah.number, n)),
         rec ? act('✕ Hapus status', () => reset(n)) : null),
     ],
   });
@@ -284,6 +288,11 @@ export function initReader() {
     playFrom(from, to);
   };
   $('#rbView').onclick = toggleView;
+  $('#miBookmark').onclick = () => {
+    if (!surah) return;
+    const last = state.progress.last;
+    openBookmarks({ surah: surah.number, ayah: last.surah === surah.number ? last.ayah : 1 });
+  };
   $('#rbHide').onclick = toggleHide;
   $('#rbMistakes').onclick = () => mushaf.openMistakes(n => focus(n));
   $('#rbPeekWord').onclick = () => mushaf.peekWord();
@@ -308,5 +317,5 @@ export function initReader() {
 // Sinkronkan tampilan ayat bila progres berubah (tombol, popup setoran, impor, dsb.).
 function refreshVerseIfChanged(v) {
   const ayah = Number(v.dataset.ayah);
-  if (v.dataset.sig !== signature(state.progress.items[ayahKey(surah.number, ayah)])) refreshVerse(ayah);
+  if (v.dataset.sig !== signature(state.progress.items[ayahKey(surah.number, ayah)], isBookmarked(surah.number, ayah))) refreshVerse(ayah);
 }

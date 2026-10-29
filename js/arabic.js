@@ -3,6 +3,10 @@
 
 const MARKS = /[ؐ-ًؚ-ٰٟۖ-ۭـ]/g;
 
+// Buang harakat & tanda Al-Qur'an saja (huruf tetap). Untuk teks di elemen yang memakai font sistem
+// (mis. <select>), yang sering tidak punya glyph tanda khusus seperti U+06E1.
+export const stripMarks = text => String(text || '').replace(MARKS, '');
+
 export function normalizeArabic(text) {
   return String(text || '')
     .normalize('NFC')
@@ -75,6 +79,11 @@ export const PROFILES = {
 };
 export const MATCH_THRESHOLD = PROFILES.normal.threshold;
 
+// Kata pendek (≤ 3 huruf) butuh kemiripan lebih tinggi: satu huruf beda sudah mengubah banyak,
+// dan tanpa ini "الله" dianggap cocok dengan "له" (0,63).
+const SHORT_MIN = 0.75;
+export const thresholdFor = (a, b, threshold) => (Math.min(a.length, b.length) <= 3 ? Math.max(threshold, SHORT_MIN) : threshold);
+
 // Pecah teks ayat menjadi kata tampilan + bentuk ternormalisasi; token tanpa huruf (mis. ۞) dibuang.
 export function tokenize(text) {
   return String(text || '').split(/\s+/)
@@ -103,7 +112,7 @@ export function alignWords(targetNorms, spoken, profile = PROFILES.normal) {
       if (i) best = dp[i - 1][j];
       if (i && j) {
         const s = sim(t[i - 1], sp[j - 1]);
-        if (s >= threshold && dp[i - 1][j - 1] + s > best) { best = dp[i - 1][j - 1] + s; move = MATCH; }
+        if (s >= thresholdFor(t[i - 1], sp[j - 1], threshold) && dp[i - 1][j - 1] + s > best) { best = dp[i - 1][j - 1] + s; move = MATCH; }
       }
       if (i && j > 1) {
         const s = sim(t[i - 1], sp[j - 2] + sp[j - 1]);
