@@ -33,6 +33,8 @@ PWA (tanpa build tool, tanpa dependensi) untuk menghafal Al-Qur'an dengan siklus
 - **Data** — ekspor/impor JSON (juga menerima ekspor versi MVP), migrasi otomatis progres MVP (`aitahfiz-progress-v1`).
 - Tema terang/gelap, ukuran huruf Arab dapat diatur.
 
+**Alamat aplikasi:** https://tahfiz.lifeos.web.id (GitHub Pages dengan domain sendiri; file `CNAME`).
+
 ## Menjalankan
 Service worker butuh `localhost` atau HTTPS (jangan buka lewat `file://`).
 
