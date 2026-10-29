@@ -1,0 +1,49 @@
+// Aplikasi Android AI Tahfiz: Trusted Web Activity (TWA) yang membuka https://tahfiz.lifeos.web.id
+// di Chrome, layar penuh. Isi aplikasi = situs web; APK hanya pembungkus tipis.
+plugins {
+    id 'com.android.application'
+}
+
+// Kunci tanda tangan rilis dibaca dari environment (GitHub Actions secrets), tidak pernah disimpan di repo.
+def keystorePath = System.getenv('ANDROID_KEYSTORE_PATH')
+
+android {
+    namespace 'id.aitahfiz.app'
+    compileSdk 36
+
+    defaultConfig {
+        applicationId 'id.aitahfiz.app'
+        minSdk 21
+        targetSdk 36
+        // versionCode wajib naik setiap unggahan ke Play Store; CI mengisinya dari nomor build.
+        versionCode((System.getenv('VERSION_CODE') ?: '1') as int)
+        versionName '1.0.' + (System.getenv('VERSION_CODE') ?: '1')
+    }
+
+    signingConfigs {
+        release {
+            if (keystorePath) {
+                storeFile file(keystorePath)
+                storePassword System.getenv('ANDROID_KEYSTORE_PASSWORD')
+                keyAlias System.getenv('ANDROID_KEY_ALIAS')
+                keyPassword System.getenv('ANDROID_KEY_PASSWORD')
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            if (keystorePath) signingConfig signingConfigs.release
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.5.0'
+}

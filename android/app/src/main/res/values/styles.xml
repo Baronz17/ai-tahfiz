@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Aktivitas peluncur hanya meneruskan ke Chrome; dibuat transparan agar tidak berkedip. -->
+    <style name="Theme.LauncherActivity" parent="android:Theme.Translucent.NoTitleBar" />
+</resources>
