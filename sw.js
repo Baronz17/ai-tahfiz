@@ -3,7 +3,7 @@
 // - API Al-Qur'an: network-first dengan cadangan cache (aplikasi juga menyimpan surah di IndexedDB).
 // - Font Google: cache-first.
 // Naikkan VERSION setiap rilis agar cache lama dibersihkan.
-const VERSION = 'v2.2.0';
+const VERSION = 'v2.2.1';
 const SHELL_CACHE = `ai-tahfiz-shell-${VERSION}`;
 const DATA_CACHE = 'ai-tahfiz-data';
 const FONT_CACHE = 'ai-tahfiz-fonts';

@@ -122,3 +122,56 @@ test('follow: records what was heard instead of a skipped word', () => {
   assert.deepEqual(f.summary().problems[0].heard, ['من']);
   assert.equal(f.log.length, 2);
 });
+
+// ---- Regresi dari uji di HP (Al-Ikhlas): pembaca baru di ayat 2, aplikasi melompat ke ayat 4 ----
+const IKHLAS_REAL = stream(['قُلْ هُوَ ٱللَّهُ أَحَدٌ', 'ٱللَّهُ ٱلصَّمَدُ', 'لَمْ يَلِدْ وَلَمْ يُولَدْ', 'وَلَمْ يَكُن لَّهُۥ كُفُوًا أَحَدٌۢ']);
+
+test('regresi: hasil kumulatif (teks final sebelumnya diulang) tidak membuat lompatan', () => {
+  const f = new Follower(IKHLAS_REAL);
+  f.newSession();
+  f.hear('قل هو الله احد', true);
+  f.hear('قل هو الله احد الله احد', true); // Chrome Android: diawali teks final sebelumnya
+  assert.equal(f.cursor, 5, 'hanya "الله" (ayat 2) yang maju');
+  assert.equal(f.pending.size, 0);
+  assert.ok(!f.done.has(12) && !f.done.has(14), 'kata di ayat 4 tidak boleh hijau');
+});
+
+test('regresi: satu kata kebetulan sama jauh di depan tidak cukup untuk melompat', () => {
+  const f = new Follower(IKHLAS_REAL);
+  f.hear('قل هو الله احد', true);
+  f.hear('الله', true);
+  f.hear('احد قل هو الله احد', true); // salah dengar "الصمد" + teks ayat 1 terulang, sesi baru (tanpa awalan)
+  assert.equal(f.cursor, 5);
+  assert.equal(f.pending.size, 0);
+});
+
+test('regresi: "الله" tidak lagi dianggap cocok dengan "له"', () => {
+  const f = new Follower(IKHLAS_REAL);
+  f.setStart(f.firstWordOf(4));
+  f.hear('الله', true);
+  assert.equal(f.cursor, f.firstWordOf(4));
+});
+
+test('regresi: teks ayat yang sudah dibaca terulang tidak menarik kursor mundur', () => {
+  const f = new Follower(IKHLAS_REAL);
+  f.hear('قل هو الله احد', true);
+  f.hear('الله الصمد', true);
+  f.hear('قل هو الله احد', true);
+  assert.equal(f.cursor, 6);
+});
+
+test('lompatan sah (lupa satu ayat lalu lanjut) tetap diterima bila didukung 3 kata kuat', () => {
+  const f = new Follower(IKHLAS_REAL);
+  f.hear('قل هو الله احد', true);
+  f.hear('لم يلد ولم يولد', true); // ayat 2 terlupa
+  assert.equal(f.cursor, 10);
+  assert.deepEqual([...f.pending].sort((a, b) => a - b), [4, 5]);
+});
+
+test('kata pendek dengan beda kecil tetap cocok', () => {
+  const f = new Follower(IKHLAS_REAL);
+  f.setStart(f.firstWordOf(4));
+  f.hear('ولم يكون لهو كفوا احد', true); // يكن→يكون, له→لهو
+  assert.equal(f.cursor, IKHLAS_REAL.length);
+  assert.equal(f.pending.size, 0);
+});

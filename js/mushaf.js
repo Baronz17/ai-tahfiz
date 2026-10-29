@@ -171,6 +171,7 @@ function startFollow() {
 }
 
 function listen() {
+  follower.newSession();
   rec = new Recognition();
   rec.lang = 'ar-SA';
   rec.interimResults = true;
