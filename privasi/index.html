@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0f5132">
+<meta name="description" content="Kebijakan privasi aplikasi AI Tahfiz: data apa yang disimpan, ke mana data dikirim, dan cara menghapusnya.">
+<link rel="icon" href="../icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap">
+<title>Kebijakan Privasi · AI Tahfiz</title>
+<style>
+  :root {
+    --bg: #f6f4ec; --surface: #fffefa; --ink: #17231b; --muted: #5f6d64; --line: #dce4dc;
+    --primary: #0f5132; --accent-soft: #fbf3df; --surface-2: #eef3ee;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #0c1510; --surface: #132019; --ink: #e6eee8; --muted: #9fb0a5; --line: #26382d; --primary: #58c086; --accent-soft: #2b2416; --surface-2: #1b2c22; color-scheme: dark; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.65 "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  header { background: #0f5132; color: #fff; padding: 18px 16px; }
+  header .wrap { display: flex; align-items: center; gap: 12px; }
+  header img { width: 40px; height: 40px; border-radius: 10px; }
+  header h1 { margin: 0; font-size: 1.25rem; font-weight: 800; letter-spacing: -.02em; }
+  header p { margin: 0; font-size: .85rem; opacity: .85; }
+  .wrap { max-width: 760px; margin: 0 auto; }
+  main { padding: 20px 16px 48px; }
+  article { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 20px 18px; }
+  h2 { font-size: 1.1rem; margin: 28px 0 8px; letter-spacing: -.01em; }
+  h2:first-of-type { margin-top: 8px; }
+  p, li { color: var(--ink); }
+  ul { padding-left: 20px; }
+  li { margin: 4px 0; }
+  .muted { color: var(--muted); font-size: .9rem; }
+  .summary { background: var(--accent-soft); border-radius: 12px; padding: 12px 14px; margin: 0 0 8px; }
+  .summary ul { margin: 6px 0 0; }
+  table { width: 100%; border-collapse: collapse; font-size: .92rem; margin: 8px 0; }
+  th, td { text-align: left; vertical-align: top; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+  th { background: var(--surface-2); font-weight: 700; }
+  .scroll { overflow-x: auto; }
+  a { color: var(--primary); }
+  code { font-size: .88em; background: var(--surface-2); padding: 1px 5px; border-radius: 6px; overflow-wrap: anywhere; }
+  .back { display: inline-block; margin-top: 18px; font-weight: 700; }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <img src="../icon.svg" alt="">
+    <div><h1>Kebijakan Privasi</h1><p>AI Tahfiz · berlaku sejak 29 Oktober 2026</p></div>
+  </div>
+</header>
+<main class="wrap">
+  <article>
+    <div class="summary">
+      <strong>Ringkasnya:</strong>
+      <ul>
+        <li>AI Tahfiz <strong>tidak memiliki server untuk data pengguna</strong>, tidak memakai akun, iklan, analitik, maupun pelacak.</li>
+        <li>Progres hafalan, penanda, dan pengaturan <strong>hanya tersimpan di perangkat Anda</strong>.</li>
+        <li>Saat fitur mikrofon dipakai, <strong>suara Anda diproses oleh layanan pengenal suara browser</strong> (di Chrome: Google). AI Tahfiz tidak merekam atau menyimpan suara.</li>
+      </ul>
+    </div>
+
+    <h2>1. Tentang aplikasi ini</h2>
+    <p>AI Tahfiz adalah aplikasi untuk membantu menghafal Al-Qur'an: membaca mushaf, menyetor bacaan dengan suara, dan murajaah terjadwal. Aplikasi tersedia sebagai situs web di <code>https://tahfiz.lifeos.web.id</code> dan sebagai aplikasi Android (<code>id.aitahfiz.app</code>) yang membuka situs yang sama melalui Chrome. Kebijakan ini berlaku untuk keduanya.</p>
+
+    <h2>2. Data yang disimpan di perangkat Anda</h2>
+    <p>Data berikut disimpan di penyimpanan browser pada perangkat Anda dan <strong>tidak dikirim ke pengembang</strong>:</p>
+    <ul>
+      <li>Status hafalan per ayat, jadwal murajaah, dan catatan aktivitas harian (untuk statistik dan hari beruntun).</li>
+      <li>Penanda (bookmark) dan posisi bacaan terakhir.</li>
+      <li>Pengaturan, misalnya target harian, qari, ukuran huruf, tema, dan kepekaan pencocokan suara.</li>
+      <li>Salinan teks surah yang sudah dibuka atau diunduh, agar bisa dibaca tanpa internet.</li>
+    </ul>
+    <p>Teks hasil transkripsi suara hanya disimpan sementara di memori selama sesi dan hilang saat halaman ditutup atau surah diganti.</p>
+
+    <h2>3. Mikrofon dan pengenalan suara</h2>
+    <ul>
+      <li>Mikrofon hanya dipakai setelah Anda menekan tombol mikrofon, dan browser akan meminta izin Anda terlebih dahulu. Izin bisa dicabut kapan saja di pengaturan situs browser.</li>
+      <li>AI Tahfiz memakai fitur pengenalan suara bawaan browser (Web Speech API). Pada Google Chrome, suara Anda dikirim ke server Google untuk diubah menjadi teks, dan tunduk pada <a href="https://policies.google.com/privacy" rel="noopener">Kebijakan Privasi Google</a>.</li>
+      <li>AI Tahfiz hanya menerima teks hasil transkripsi untuk dicocokkan dengan teks ayat. AI Tahfiz tidak merekam, menyimpan, atau mengirim rekaman suara ke pihak mana pun.</li>
+      <li>Hasil pencocokan adalah perkiraan dan bukan penilaian tajwid.</li>
+    </ul>
+
+    <h2>4. Layanan pihak ketiga yang dihubungi perangkat Anda</h2>
+    <p>Untuk menampilkan konten, perangkat Anda terhubung langsung ke layanan berikut. Seperti umumnya permintaan internet, layanan tersebut dapat menerima alamat IP dan informasi teknis browser Anda.</p>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Layanan</th><th>Untuk</th><th>Data yang dikirim</th></tr></thead>
+        <tbody>
+          <tr><td>GitHub Pages (GitHub, Inc.)</td><td>Menyajikan file aplikasi</td><td>Permintaan halaman (alamat IP, browser)</td></tr>
+          <tr><td>AlQuran Cloud (<code>api.alquran.cloud</code>)</td><td>Teks Al-Qur'an dan terjemahan</td><td>Nomor surah yang diminta</td></tr>
+          <tr><td>Islamic Network (<code>cdn.islamic.network</code>)</td><td>Audio murattal</td><td>Ayat dan qari yang diputar</td></tr>
+          <tr><td>Google Fonts</td><td>Huruf tampilan</td><td>Permintaan file huruf</td></tr>
+          <tr><td>Pengenal suara browser (Chrome: Google)</td><td>Fitur mikrofon</td><td>Suara saat mikrofon aktif</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="muted">Pengembang tidak menerima data dari layanan-layanan tersebut. Penggunaan data oleh layanan tersebut tunduk pada kebijakan privasi masing-masing.</p>
+
+    <h2>5. Ekspor dan impor</h2>
+    <p>Fitur ekspor membuat file JSON berisi progres Anda, yang disimpan di perangkat Anda sendiri. Fitur impor membaca file yang Anda pilih secara lokal. Tidak ada yang diunggah ke server.</p>
+
+    <h2>6. Menghapus data</h2>
+    <ul>
+      <li>Di aplikasi: <strong>Progres → Hapus progres</strong>.</li>
+      <li>Atau hapus data situs <code>tahfiz.lifeos.web.id</code> di pengaturan browser, atau copot pemasangan aplikasi Android lalu hapus data situs di Chrome.</li>
+    </ul>
+    <p>Karena pengembang tidak menyimpan data Anda di server, tidak ada data di sisi pengembang yang perlu dihapus.</p>
+
+    <h2>7. Anak-anak</h2>
+    <p>Aplikasi ini dapat digunakan oleh anak-anak dengan pendampingan orang tua atau guru. AI Tahfiz tidak meminta data pribadi seperti nama, email, atau nomor telepon, dan tidak menampilkan iklan. Fitur mikrofon tunduk pada izin browser sebagaimana dijelaskan di bagian 3.</p>
+
+    <h2>8. Keamanan</h2>
+    <p>Aplikasi hanya disajikan melalui HTTPS. Data di perangkat Anda dilindungi oleh mekanisme keamanan browser dan sistem operasi; siapa pun yang dapat membuka perangkat Anda dapat melihat progres di aplikasi.</p>
+
+    <h2>9. Perubahan kebijakan</h2>
+    <p>Kebijakan ini dapat diperbarui bila cara kerja aplikasi berubah, misalnya jika kelak ditambahkan akun atau sinkronisasi. Tanggal berlaku di bagian atas halaman akan diperbarui, dan perubahan penting akan diumumkan di aplikasi.</p>
+
+    <h2>10. Kontak</h2>
+    <p>Pertanyaan tentang privasi dapat disampaikan melalui halaman <a href="https://github.com/Baronz17/ai-tahfiz/issues" rel="noopener">GitHub Issues proyek AI Tahfiz</a>.</p>
+
+    <a class="back" href="../">← Kembali ke AI Tahfiz</a>
+  </article>
+</main>
+</body>
+</html>
