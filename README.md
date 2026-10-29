@@ -75,3 +75,28 @@ streak, migrasi, dan impor.
 - Audio dan pengenalan suara memerlukan internet; audio tidak di-cache.
 - Progres hanya di perangkat ini (localStorage). Ekspor berkala.
 - 6.236 dipakai sebagai angka acuan jumlah ayat; sistem penomoran dapat berbeda.
+
+## Aplikasi Android (Play Store)
+Folder `android/` berisi aplikasi **Trusted Web Activity (TWA)**: APK tipis yang membuka
+`https://tahfiz.lifeos.web.id` di Chrome secara layar penuh. Isi aplikasi tetap situs web ini, jadi setiap
+perubahan yang di-merge ke `main` langsung sampai ke pengguna **tanpa** unggah ulang ke Play Store.
+APK hanya perlu dibangun ulang untuk mengganti nama/ikon/warna atau menaikkan `targetSdk` (syarat tahunan Play).
+
+**Build otomatis:** workflow `.github/workflows/android.yml` membangun APK uji coba setiap ada perubahan di
+`android/`. Hasilnya diunduh dari tab *Actions* → run terbaru → *Artifacts*.
+
+**Build rilis (AAB untuk Play Store)** membutuhkan kunci upload milik Anda sebagai *secrets* repo
+(Settings → Secrets and variables → Actions):
+
+| Secret | Isi |
+|---|---|
+| `ANDROID_KEYSTORE_BASE64` | isi file keystore (`.jks`) dalam base64 |
+| `ANDROID_KEYSTORE_PASSWORD` | kata sandi keystore |
+| `ANDROID_KEY_ALIAS` | alias kunci |
+| `ANDROID_KEY_PASSWORD` | kata sandi kunci |
+
+Simpan file keystore dan kata sandinya di tempat aman di luar repo; tanpa itu aplikasi tidak bisa diperbarui.
+Setelah build rilis pertama, sidik jari SHA-256 kunci tampil di ringkasan run; sidik jari itu (dan sidik jari
+*app signing key* dari Play Console) dimasukkan ke `.well-known/assetlinks.json` agar aplikasi tampil tanpa address bar.
+
+Membuka di Android Studio: *File → Open* → pilih folder `android/`.
