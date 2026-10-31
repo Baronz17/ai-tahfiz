@@ -184,7 +184,19 @@ function renderSettings() {
 }
 
 // ---------- Inisialisasi ----------
+// Tautan email masukan: isi otomatis versi & perangkat agar laporan mudah ditelusuri (pengguna melihatnya sebelum mengirim).
+function setupFeedbackLink() {
+  const link = $('#feedbackLink');
+  const base = link.getAttribute('href').split('?')[0];
+  const body = [
+    'Assalamu\'alaikum,', '', 'Masukan / masalah:', '', '', 'Langkah untuk mengulang (jika ada masalah):', '', '',
+    '---', `Versi: ${$('#appVersion').textContent}`, `Perangkat: ${navigator.userAgent}`, `Halaman: ${location.hash || '#/beranda'}`,
+  ].join('\n');
+  link.href = `${base}?subject=${encodeURIComponent('AI Tahfiz – Masukan')}&body=${encodeURIComponent(body)}`;
+}
+
 function bindUi() {
+  setupFeedbackLink();
   $('#exportData').onclick = exportData;
   $('#importFile').onchange = e => { const f = e.target.files[0]; e.target.value = ''; if (f) importData(f); };
   $('#clearData').onclick = () => {

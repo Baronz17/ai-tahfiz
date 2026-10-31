@@ -1,6 +1,6 @@
 {
   "name": "ai-tahfiz",
-  "version": "2.3.1",
+  "version": "2.3.2",
   "private": true,
   "description": "PWA latihan hafalan Al-Qur'an: belajar, setoran suara, dan murajaah terjadwal.",
   "type": "module",
