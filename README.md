@@ -107,3 +107,6 @@ Setelah build rilis pertama, sidik jari SHA-256 kunci tampil di ringkasan run; s
 *app signing key* dari Play Console) dimasukkan ke `.well-known/assetlinks.json` agar aplikasi tampil tanpa address bar.
 
 Membuka di Android Studio: *File → Open* → pilih folder `android/`.
+
+Langkah Play Console (listing toko, keamanan data, uji tertutup 12 penguji/14 hari):
+[`android/store/play-console.md`](android/store/play-console.md).

@@ -59,8 +59,15 @@ jobs:
         run: |
           FP=$(keytool -list -v -keystore "$RUNNER_TEMP/upload.jks" -storepass "$ANDROID_KEYSTORE_PASSWORD" -alias "$ANDROID_KEY_ALIAS" | grep 'SHA256:' | sed 's/.*SHA256: //')
           echo "SHA-256 kunci upload: $FP"
-          echo "### Sidik jari kunci upload (SHA-256)" >> "$GITHUB_STEP_SUMMARY"
-          echo '`'"$FP"'`' >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo "### Sidik jari kunci upload (SHA-256)"
+            echo '`'"$FP"'`'
+            echo "### Isi .well-known/assetlinks.json (kunci upload saja)"
+            echo "Tambahkan juga SHA-256 *app signing key* dari Play Console setelah unggahan pertama."
+            echo '```json'
+            printf '[{"relation":["delegate_permission/common.handle_all_urls"],"target":{"namespace":"android_app","package_name":"id.aitahfiz.app","sha256_cert_fingerprints":["%s"]}}]\n' "$FP"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Hapus kunci dari runner
         if: always() && env.HAS_KEYSTORE == 'true'
