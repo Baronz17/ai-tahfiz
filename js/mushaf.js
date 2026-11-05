@@ -13,6 +13,15 @@ const BISMILLAH = 'بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَ
 const DIGITS = '٠١٢٣٤٥٦٧٨٩';
 export const arabicDigits = n => String(n).replace(/\d/g, d => DIGITS[d]);
 
+// Penanda ayat berbingkai (ayah-frame.svg sebagai mask; warna = currentColor):
+// nomor Arab di lingkaran besar, nomor Latin opsional di lingkaran kecil bawah.
+export function ayahMarker(n, { tag = 'span', ...props } = {}) {
+  const len = `n${String(n).length}`;
+  return h(tag, { ...props, class: ['mk', props.class].filter(Boolean).join(' ') },
+    h('span', { class: `mk-ar ${len}`, 'aria-hidden': 'true', text: arabicDigits(n) }),
+    h('span', { class: `mk-lat ${len}`, 'aria-hidden': 'true', text: n }));
+}
+
 let surah = null, follower = null, wordEls = [], hideOn = false, following = false, rec = null;
 let pageObserver = null, heardFinal = '';
 const handlers = {};
@@ -67,7 +76,7 @@ export function renderMushaf(s, { hide }) {
         wordEls.push(prev);
         ay.append(prev, ' ');
       }
-      ay.append(h('button', { class: 'mk', type: 'button', dataset: { ayah: a.n }, 'aria-label': `Ayat ${a.n}: menu`, text: arabicDigits(a.n) }), ' ');
+      ay.append(ayahMarker(a.n, { tag: 'button', type: 'button', dataset: { ayah: a.n }, 'aria-label': `Ayat ${a.n}: menu` }), ' ');
       text.append(ay);
     }
     parts.push(h('section', { class: 'm-page', dataset: { page: pg.page ?? '', juz: pg.juz ?? '', hizb: pg.hizb ?? '' } },
