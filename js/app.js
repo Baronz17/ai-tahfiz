@@ -163,6 +163,7 @@ async function importData(file) {
 
 // ---------- Pengaturan ----------
 function applyAppearance() {
+  document.body.classList.toggle('mk-latin', !!state.settings.latinAyahNumbers);
   document.documentElement.style.setProperty('--ar-size', `${state.settings.fontSize}px`);
   if (state.settings.theme === 'auto') delete document.documentElement.dataset.theme;
   else document.documentElement.dataset.theme = state.settings.theme;
@@ -180,6 +181,7 @@ function renderSettings() {
   $('#setTheme').value = state.settings.theme;
   $('#setSensitivity').value = state.settings.sensitivity;
   $('#setUiFont').value = state.settings.uiFont;
+  $('#setLatinNums').checked = !!state.settings.latinAyahNumbers;
   $('#setShowHeard').checked = state.settings.showHeard;
 }
 
@@ -212,6 +214,7 @@ function bindUi() {
   $('#setTheme').onchange = e => { saveSettings({ theme: e.target.value }); applyAppearance(); };
   $('#setSensitivity').onchange = e => saveSettings({ sensitivity: e.target.value });
   $('#setUiFont').onchange = e => { saveSettings({ uiFont: e.target.value }); applyAppearance(); };
+  $('#setLatinNums').onchange = e => { saveSettings({ latinAyahNumbers: e.target.checked }); applyAppearance(); };
   $('#openSearch').onclick = () => openSearch();
   $('#openBookmarks').onclick = () => openBookmarks();
   $('#homeAllBookmarks').onclick = () => openBookmarks();

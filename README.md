@@ -4,7 +4,9 @@ PWA (tanpa build tool, tanpa dependensi) untuk menghafal Al-Qur'an dengan siklus
 **dengar & baca → hafalkan → setor suara → murajaah terjadwal**.
 
 ## Fitur
-- **Tampilan mushaf** (default) — teks mengalir per halaman dengan penanda ayat, banner surah, info Halaman | Juz | Hizb.
+- **Tampilan mushaf** (default) — teks mengalir per halaman dengan penanda ayat berornamen, banner surah, info Halaman | Juz | Hizb.
+  Penanda ayat (`ayah-frame.svg`, dipakai sebagai CSS mask): nomor Arab di lingkaran besar, nomor Latin opsional di
+  lingkaran kecil (Pengaturan); warna garis mengikuti tema dan status (hijau = hafal, merah = perlu diulang).
   Bilah bawah: *Kesalahan*, ganti tampilan (mushaf/daftar), *sembunyikan ayat*, buka satu kata (‹) / sisa ayat («).
   **Ikuti bacaan:** tekan mikrofon dan baca dari hafalan — kata yang terdengar cocok muncul otomatis, kata terlewat
   ditandai merah, lalu ringkasan kesalahan bisa langsung dijadikan jadwal murajaah. Ketuk nomor ayat untuk menu

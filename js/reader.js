@@ -34,7 +34,7 @@ function verseEl(a) {
   const bm = isBookmarked(n, a.n);
   const el = h('article', { class: 'verse', id: `ayah-${a.n}`, dataset: { ayah: a.n, sig: signature(rec, bm) } },
     h('div', { class: 'verse-head' },
-      h('span', { class: 'num', 'aria-label': `Ayat ${a.n}`, text: a.n }),
+      mushaf.ayahMarker(a.n, { role: 'img', 'aria-label': `Ayat ${a.n}` }),
       statusPill(rec),
       h('span', { class: 'spacer' }),
       h('div', { class: 'actions' },
